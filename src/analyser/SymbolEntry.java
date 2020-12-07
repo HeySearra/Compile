@@ -1,17 +1,14 @@
 package analyser;
 
 public class SymbolEntry {
-    boolean isConstant;
+    SymbolType type;
+    String name;
     boolean isInitialized;
     int stackOffset;
 
-    /**
-     * @param isConstant
-     * @param isDeclared
-     * @param stackOffset
-     */
-    public SymbolEntry(boolean isConstant, boolean isDeclared, int stackOffset) {
-        this.isConstant = isConstant;
+    public SymbolEntry(SymbolType type, String name, boolean isDeclared, int stackOffset) {
+        this.type = type;
+        this.name = name;
         this.isInitialized = isDeclared;
         this.stackOffset = stackOffset;
     }
@@ -24,25 +21,19 @@ public class SymbolEntry {
     }
 
     /**
-     * @return the isConstant
-     */
-    public boolean isConstant() {
-        return isConstant;
-    }
-
-    /**
      * @return the isInitialized
      */
     public boolean isInitialized() {
         return isInitialized;
     }
 
-    /**
-     * @param isConstant the isConstant to set
-     */
-    public void setConstant(boolean isConstant) {
-        this.isConstant = isConstant;
+    public void setType(SymbolType type) {
+        this.type = type;
     }
+
+    public SymbolType getType() { return this.type; }
+
+    public boolean isConstant() { return this.type == SymbolType.Const;}
 
     /**
      * @param isInitialized the isInitialized to set
