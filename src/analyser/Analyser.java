@@ -113,47 +113,18 @@ public final class Analyser {
      * @return 这个 token
      * @throws CompileError 如果类型不匹配
      */
-    private Token expect(TokenType tt) throws CompileError {
-        var token = peek();
-        if (token.getTokenType() == tt) {
-            return next();
-        } else {
-            throw new ExpectedTokenError(tt, token);
+    private Token expect(TokenType... tt) throws CompileError {
+        TokenType token = peek().getTokenType();
+        if(token == TokenType.COMMENT){
+            expect(TokenType.COMMENT);
         }
-    }
-
-    private Token expectTy() throws CompileError {
-        var token = peek();
-        TokenType tt = token.getTokenType();
-        if (tt == TokenType.VOID_KW || tt == TokenType.INT_KW || tt == TokenType.DOUBLE_KW ) {
-            return next();
-        } else {
-            throw new ExpectedTokenError(Format.generateList(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW), token);
+        for (TokenType t : tt) {
+            if (token == t) {
+                return next();
+            }
         }
+        throw new ExpectedTokenError(Format.generateList(tt), peek());
     }
-
-    private Token expectLiteral() throws CompileError {
-        TokenType tt = peek().getTokenType();
-        if (tt == TokenType.UINT_LITERAL || tt == TokenType.DOUBLE_LITERAL || tt == TokenType.STRING_LITERAL || tt == TokenType.CHAR_LITERAL ) {
-            return next();
-        } else {
-            throw new ExpectedTokenError(
-                Format.generateList(TokenType.UINT_LITERAL, TokenType.DOUBLE_KW, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL), peek());
-        }
-    }
-
-    private Token expectBinaryOperator() throws CompileError {
-        TokenType tt = peek().getTokenType();
-        if (tt == TokenType.PLUS || tt == TokenType.MINUS || tt == TokenType.MUL || tt == TokenType.DIV
-            || tt == TokenType.EQ || tt == TokenType.NEQ || tt == TokenType.LT || tt == TokenType.GT
-            || tt == TokenType.LE || tt == TokenType.GE) {
-            return next();
-        } else {
-            throw new ExpectedTokenError(
-                Format.generateList(TokenType.UINT_LITERAL, TokenType.DOUBLE_KW, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL), peek());
-        }
-    }
-
 
     /**
      * 获取下一个变量的栈偏移
@@ -247,7 +218,7 @@ public final class Analyser {
             analyseFunctionParamList();
         expect(TokenType.R_PAREN);
         expect(TokenType.ARROW);
-        expectTy();
+        expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
         analyseBlockStmt();
     }
 
@@ -332,7 +303,7 @@ public final class Analyser {
                 analyseIdentExpr();
             }
         } else if(checkLiteral()){
-            expectLiteral();
+            expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
         } else{
             analyseLiteralExpr();
         }
@@ -348,16 +319,17 @@ public final class Analyser {
     }
 
     private void analyseLiteralExpr() throws CompileError{
-        expectLiteral();
+        expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
     }
 
     private void analyseAsExpr() throws CompileError{
         expect(TokenType.AS_KW);
-        Token ty = expectTy();
+        Token ty = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);;
     }
 
     private void analyseOperatorExpr() throws CompileError{
-        expectBinaryOperator();
+        expect(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
+            TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE);
         analyseExpr();
     }
 
@@ -452,7 +424,7 @@ public final class Analyser {
         }
         expect(TokenType.IDENT);
         expect(TokenType.COLON);
-        expectTy();
+        expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
 
     }
 
@@ -468,7 +440,7 @@ public final class Analyser {
         expect(TokenType.CONST_KW);
         expect(TokenType.IDENT);
         expect(TokenType.COLON);
-        expectTy();
+        expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);;
         expect(TokenType.ASSIGN);
         analyseExpr();
         expect(TokenType.SEMICOLON);
@@ -478,7 +450,7 @@ public final class Analyser {
         expect(TokenType.LET_KW);
         expect(TokenType.IDENT);
         expect(TokenType.COLON);
-        expectTy();
+        expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);;
         if(check(TokenType.ASSIGN)){
             expect(TokenType.ASSIGN);
             analyseExpr();

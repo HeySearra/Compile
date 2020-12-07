@@ -34,11 +34,7 @@ public class App {
             StringIter iter = new StringIter(scanner);
             Tokenizer tokenizer = tokenize(iter);
             Analyser analyzer = new Analyser(tokenizer);
-
-            System.out.println("\n------------------Analyser Start");
             analyzer.analyse();
-
-            System.out.println("\n----------------------------生成二进制");
             //            OutToBinary binary = new OutToBinary(Analyser.getGlobals(), Analyser.getStartFunction(), Analyser.getFunctionDefs());
             //
             //            DataOutputStream out = new DataOutputStream(new FileOutputStream(new File(args[1])));

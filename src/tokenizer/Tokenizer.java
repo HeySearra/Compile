@@ -2,14 +2,9 @@ package tokenizer;
 
 import error.TokenizeError;
 
-import java.text.Normalizer.Form;
-import java.util.regex.Pattern;
-
 import error.ErrorCode;
 import util.Format;
 import util.Pos;
-import tokenizer.StringIter;
-import tokenizer.Token;
 
 public class Tokenizer {
 
@@ -34,10 +29,6 @@ public class Tokenizer {
         }
 
         char peek = it.peekChar();
-        while(!it.isEOF() && peek == '/'){
-            lexComment();
-            peek = it.peekChar();
-        }
         if (Character.isDigit(peek)) {
             return lexUIntOrDouble();
         } else if (Character.isAlphabetic(peek)) {
@@ -48,7 +39,7 @@ public class Tokenizer {
             return lexCharLiteral();
         }
         else {
-            return lexOperatorOrUnknown();
+            return lexOperatorOrCommentOrUnknown();
         }
     }
 
@@ -273,7 +264,7 @@ public class Tokenizer {
         }
     }
 
-    private Token lexOperatorOrUnknown() throws TokenizeError {
+    private Token lexOperatorOrCommentOrUnknown() throws TokenizeError {
         char a = it.nextChar();
         switch (a) {
             case '+':
@@ -289,7 +280,13 @@ public class Tokenizer {
             case '/':
                 if(it.peekChar() == '/'){
                     it.nextChar();
-                    return new Token(TokenType.COMMENT, "//", it.previousPos(), it.currentPos());
+                    StringBuilder comment=new StringBuilder("");
+                    char peek = it.peekChar();
+                    while(!it.isEOF() && peek != '\n'){
+                        comment.append(it.nextChar());
+                        peek = it.peekChar();
+                    }
+                    return new Token(TokenType.COMMENT, "//" + comment.toString(), it.previousPos(), it.currentPos());
                 }
                 return new Token(TokenType.DIV, a, it.previousPos(), it.currentPos());
             case '=':
