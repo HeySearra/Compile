@@ -1,4 +1,4 @@
 FROM openjdk:11
 WORKDIR /app/
 COPY ./* ./
-RUN javac src/App.java -encode utf-8
+RUN javac App.java -encoding utf-8
