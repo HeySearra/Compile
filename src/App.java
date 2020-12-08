@@ -1,7 +1,3 @@
-import analyser.Analyser;
-import error.CompileError;
-import instruction.Instruction;
-import instruction.OutToBinary;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,15 +8,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import tokenizer.StringIter;
-import tokenizer.Token;
-import tokenizer.TokenType;
-import tokenizer.Tokenizer;
 
 
 public class App {
     public static void main(String[] args) throws FileNotFoundException, CompileError {
-        try {
+//        try {
             InputStream input;
             PrintStream output;
             DataOutputStream out;
@@ -44,9 +36,9 @@ public class App {
             //                resultBytes[i] = bytes.get(i);
             //            }
             //            out.write(resultBytes);
-        }catch (Exception e){
-            System.exit(-1);
-        }
+//        }catch (Exception e){
+//            System.exit(-1);
+//        }
     }
 
     private static Tokenizer tokenize(StringIter iter) {

@@ -17,7 +17,7 @@ fn main() -> int {
         putchar(32);
         putint(fib(i));
         putln();
-        i = i + ;//vevevd
+        i = i + 1;//vevevd
     }
     //vevevd
     return 0;
