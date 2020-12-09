@@ -2,21 +2,21 @@ import java.util.Objects;
 
 public class Instruction {
     private Operation opt;
-    Integer num;
+    Long num;
 
     public Instruction(Operation opt) {
         this.opt = opt;
-        this.num = 0;
+        this.num = null;
     }
 
-    public Instruction(Operation opt, Integer num) {
+    public Instruction(Operation opt, Long num) {
         this.opt = opt;
         this.num = num;
     }
 
     public Instruction() {
         this.opt = Operation.nop;
-        this.num = 0;
+        this.num = null;
     }
 
     @Override
@@ -42,12 +42,20 @@ public class Instruction {
         this.opt = opt;
     }
 
-    public Integer getNum() {
+    public int getCode() { return this.opt.getCode(); }
+
+    public int getValueSize() { return this.opt.getSize(); }
+
+    public Long getNum() {
         return num;
     }
 
-    public void setNum(Integer num) {
+    public void setNum(Long num) {
         this.num = num;
+    }
+
+    public Integer getInstruction() {
+        return opt.getCode();
     }
 
     @Override

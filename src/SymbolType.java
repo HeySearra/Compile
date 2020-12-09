@@ -1,6 +1,6 @@
 
 public enum SymbolType {
-  Const, Param, Var,
+  Global, Param, Var, Function
   ;
 
   @Override
@@ -8,10 +8,12 @@ public enum SymbolType {
     switch (this) {
       case Param:
         return "param symbol";
-      case Const:
-        return "const symbol";
       case Var:
         return "var symbol";
+      case Global:
+        return "global symbol";
+      case Function:
+        return "function symbol";
       default:
         return "unknown symbol";
     }

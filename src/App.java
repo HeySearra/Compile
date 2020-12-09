@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.Scanner;
 
 
 public class App {
-    public static void main(String[] args) throws FileNotFoundException, CompileError {
+    public static void main(String[] args) throws IOException, CompileError {
 //        try {
             InputStream input;
             PrintStream output;
@@ -27,6 +28,13 @@ public class App {
             Tokenizer tokenizer = tokenize(iter);
             Analyser analyzer = new Analyser(tokenizer);
             analyzer.analyse();
+
+            OutToBinary outPutBinary=new OutToBinary(analyzer.def_table, analyzer.getStartFunction());
+            List<Byte> bs=outPutBinary.generate();
+            byte[] temp=new byte[bs.size()];
+            for(int i=0;i<bs.size();i++)
+              temp[i]=bs.get(i);
+            out.write(temp);
             //            OutToBinary binary = new OutToBinary(Analyser.getGlobals(), Analyser.getStartFunction(), Analyser.getFunctionDefs());
             //
             //            DataOutputStream out = new DataOutputStream(new FileOutputStream(new File(args[1])));

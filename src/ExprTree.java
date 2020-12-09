@@ -45,12 +45,14 @@ public class ExprTree {
 
   public static List<Instruction> addTokenAndGenerateInstruction(TokenType tt){
     List<Instruction> instructions=new ArrayList<>();
-    if (operation_stack.size()<1){
+    if (operation_stack.size() < 1){
       operation_stack.add(tt);
       return instructions;
     }
-    TokenType top= operation_stack.get(operation_stack.size()-1);
-    while (priority[getIndex(top)][getIndex(tt)]>0){
+
+    TokenType top= operation_stack.get(operation_stack.size() - 1);
+    System.out.println("top:" + top);
+    while (priority[getIndex(top)][getIndex(tt)] > 0){
       operation_stack.remove(operation_stack.size()-1);
       if(top == TokenType.PLUS){
         instructions.add(new Instruction(Operation.add_i));
@@ -71,13 +73,13 @@ public class ExprTree {
     return instructions;
   }
 
-//  public static List<Instruction> addAllReset(){
-//    List<Instruction> instructions=new ArrayList<>();
-//    for(TokenType tt: operation_stack){
-//      instructions.add(new Instruction(convertToOperation(tt)));
-//      operation_stack.remove(tt);
-//    }
-//    return instructions;
-//  }
+  public static List<Instruction> addAllReset(){
+    List<Instruction> instructions=new ArrayList<>();
+    for(int i = operation_stack.size()-1;i>=0;i--){
+      instructions.add(new Instruction(convertToOperation(operation_stack.get(i))));
+      operation_stack.remove(i);
+    }
+    return instructions;
+  }
 
 }

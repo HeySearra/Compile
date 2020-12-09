@@ -51,7 +51,7 @@ public enum TokenType {
             case ASSIGN:
                 return "Assign";
             case IDENT:
-                return "Identifier";
+                return "Ident";
             case L_PAREN:
                 return "Left paren";
             case MINUS:
