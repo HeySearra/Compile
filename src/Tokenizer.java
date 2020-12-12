@@ -204,13 +204,13 @@ public class Tokenizer {
                 }
                 it.nextChar();
             }
-            else if(Format.isStringRegularChar(peek)){
+            else{
                 str.append(it.nextChar());
             }
             peek = it.peekChar();
         }
         if(peek != '\"'){
-            throw new TokenizeError(ErrorCode.InvalidDouble, it.currentPos());
+            throw new TokenizeError(ErrorCode.InvalidString, it.currentPos());
         }
         else{
             it.nextChar();

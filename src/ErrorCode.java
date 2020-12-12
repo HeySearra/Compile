@@ -6,5 +6,5 @@ public enum ErrorCode {
     AssignToConstant, DuplicateDeclaration, NotInitialized, InvalidAssignment,
     InvalidPrint, ExpectedToken, InvalidDouble, InvalidInt, InvalidChar,
     NoSuchGlobal, ReturnTypeWrong, ParamNumWrong, FunctionHasNoAddr, AssignToFunction,
-    CantFindMain, NotSTDFunction, AssignFaild,
+    CantFindMain, NotSTDFunction, AssignFaild, InvalidString,
 }
