@@ -283,12 +283,12 @@ public final class Analyser {
     }
 
     private List<Instruction> analyseLiteralExpr() throws CompileError{
-        System.out.println("literal-----------");
         List<Instruction> res_ins = new ArrayList<>();
         Token token = expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
         if(token.getTokenType() == TokenType.UINT_LITERAL){
             // 直接push进栈
-            res_ins.add(new Instruction(Operation.push, (long)token.getValue()));
+            int num = (int) token.getValue();
+            res_ins.add(new Instruction(Operation.push, (long)num));
         }
         else if(token.getTokenType() == TokenType.STRING_LITERAL){
             // 新建全局变量， 变量名是该字符串，变量值也是该字符串
