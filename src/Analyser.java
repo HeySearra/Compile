@@ -262,9 +262,11 @@ public final class Analyser {
             }
         }
         else if(check(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL)){
-            expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
-        } else{
             res_ins.addAll(analyseLiteralExpr());
+        }
+        else {
+            throw new ExpectedTokenError(Format.generateList(TokenType.MINUS, TokenType.L_PAREN, TokenType.IDENT, TokenType.L_PAREN, TokenType.ASSIGN),
+                next());
         }
 
         while(check(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
@@ -281,6 +283,7 @@ public final class Analyser {
     }
 
     private List<Instruction> analyseLiteralExpr() throws CompileError{
+        System.out.println("literal-----------");
         List<Instruction> res_ins = new ArrayList<>();
         Token token = expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
         if(token.getTokenType() == TokenType.UINT_LITERAL){
@@ -361,6 +364,7 @@ public final class Analyser {
             res_ins.add(new Instruction(Operation.callname, (long)func.getId()));
         }
         else{
+
             res_ins.add(new Instruction(Operation.call, (long)func.getId()));
         }
         expect(TokenType.R_PAREN);
