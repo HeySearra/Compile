@@ -5,8 +5,6 @@ public class Function {
   // 函数体
   List<Instruction> function_body;
 
-  // 函数编号，开始函数编号为0
-  int id;
   // 参数
   List<SymbolEntry> param_table;
   // 参数slot
@@ -22,14 +20,16 @@ public class Function {
   // 定义位置
   Pos pos;
 
-  public Function(String name, Pos pos, TokenType return_type, List<Instruction> ins, int id) {
+  SymbolEntry se;
+
+  public Function(SymbolEntry se, String name, Pos pos, TokenType return_type) {
     this.name = name;//main 这种
     this.pos = pos;
-    this.function_body = ins;
-    this.param_table = new ArrayList<>();
-    this.local_table = new ArrayList<>();
+//    this.function_body = new ArrayList<>();
+//    this.param_table = new ArrayList<>();
+//    this.local_table = new ArrayList<>();
     this.return_type = return_type;
-    this.id = id;
+    this.se = se;
   }
 
   public int getParamSlot() { return param_slot; }
@@ -58,9 +58,9 @@ public class Function {
     }
   }
 
-  public int getId() { return id; }
+  public int getId() { return se.getId(); }
 
-  public void setId(int id) { this.id = id; }
+  public void setId(int id) { this.se.setId(id); }
 
   public List<Instruction>  getFunctionBody(){ return this.function_body; }
 
@@ -94,25 +94,14 @@ public class Function {
     this.return_type = return_type;
   }
 
-//  public void addSymbolEntry(SymbolEntry symbolEntry) {
-//    this.symbol_table.add(symbolEntry);
-//    if(symbolEntry.getType() == SymbolType.Param)
-//      this.paramSoltNum++;
-//    else{
-//      int currentvarSoltNUm = this.symbolEntries.size() - this.paramSoltNum;
-//      if(currentvarSoltNUm > this.varSoltNmum)
-//        this.varSoltNmum = currentvarSoltNUm;
-//    }
-//  }
-//
-//  public void outDeep(int deep) {
-//    int i = symbolEntries.size()-1;
-//    for(;i>=0;i--){
-//      if (symbolEntries.get(i).getNametype() == SymbolType.Param)
-//        return;
-//      if(symbolEntries.get(i).getDeep()==deep)
-//        symbolEntries.remove(i);
-//      else break;
-//    }
-//  }
+  public Boolean isSTDFunction(){
+    String[] std_function = {"getint", "getdouble", "getchar", "putint", "putdouble", "putchar",
+        "putstr", "putln"};
+    for(String n: std_function) {
+      if (this.se.getName().equals(n)){
+        return true;
+      }
+    }
+    return false;
+  }
 }

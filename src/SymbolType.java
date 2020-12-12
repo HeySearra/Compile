@@ -1,6 +1,6 @@
 
 public enum SymbolType {
-  Global, Param, Var, Function
+  Global, Param, Local, Function
   ;
 
   @Override
@@ -8,7 +8,7 @@ public enum SymbolType {
     switch (this) {
       case Param:
         return "param symbol";
-      case Var:
+      case Local:
         return "var symbol";
       case Global:
         return "global symbol";

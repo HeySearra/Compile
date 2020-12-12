@@ -9,20 +9,22 @@ public class SymbolEntry {
     boolean is_initialized;
     // 是否是常量
     boolean is_const;
-    int stackOffset;
     Object value;
     int level;
+    int id;
 
-    public SymbolEntry(SymbolType type, String name, TokenType tt, boolean is_initialized, boolean is_const, int stackOffset, Object value, int level) {
+    public SymbolEntry(int id, SymbolType type, String name, TokenType tt, boolean is_initialized, boolean is_const, Object value, int level) {
+        this.id = id;   // 为全局变量的id，函数在全局变量中对应的id，局部变量在函数表中对应的id，参数在函数表中对应的id，根据ST不同
         this.type = type;
         this.name = name;
         this.tt = tt;
         this.is_initialized = is_initialized;
         this.is_const = is_const;
-        this.stackOffset = stackOffset;
         this.value = value;
         this.level = level;
     }
+
+    public int getId() { return this.id;}
 
     public String getName() { return name; }
 
@@ -35,13 +37,6 @@ public class SymbolEntry {
     public int getLevel() { return level; }
 
     public void setLevel(int level) { this.level = level; }
-
-    /**
-     * @return the stackOffset
-     */
-    public int getStackOffset() {
-        return stackOffset;
-    }
 
     /**
      * @return the isInitialized
@@ -71,10 +66,5 @@ public class SymbolEntry {
         this.is_initialized = isInitialized;
     }
 
-    /**
-     * @param stackOffset the stackOffset to set
-     */
-    public void setStackOffset(int stackOffset) {
-        this.stackOffset = stackOffset;
-    }
+    public void setId(int id) { this.id = id; }
 }
