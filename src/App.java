@@ -21,10 +21,43 @@ public class App {
             String inputFileName = args[0], outputFileName = args[1];
             input = new FileInputStream(new File(inputFileName));
             out = new DataOutputStream(new FileOutputStream(new File(outputFileName)));
+
+
             Scanner scanner;
+            scanner = new Scanner(input);
+            while(scanner.hasNext()){
+                System.out.println(scanner.nextLine());
+            }
+            System.out.println("------------start-----------");
+
+            input = new FileInputStream(new File(inputFileName));
             scanner = new Scanner(input);
             StringIter iter = new StringIter(scanner);
             Tokenizer tokenizer = tokenize(iter);
+
+//            List<Token> tokens = new ArrayList<Token>();
+//            try {
+//              while (true) {
+//                Token token = tokenizer.nextToken();
+//                if (token.getTokenType().equals(TokenType.EOF)) {
+//                  break;
+//                }
+//                tokens.add(token);
+//              }
+//            } catch (Exception e) {
+//              // 遇到错误不输出，直接退出
+//              System.err.println(e);
+//              System.exit(0);
+//              return;
+//            }
+//            for (Token token : tokens) {
+//              output.println(token.toString());
+//            }
+//
+//            input = new FileInputStream(new File(inputFileName));
+//            scanner = new Scanner(input);
+//            iter = new StringIter(scanner);
+//            tokenizer = tokenize(iter);
             Analyser analyzer = new Analyser(tokenizer);
             analyzer.analyse();
 
