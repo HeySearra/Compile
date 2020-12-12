@@ -109,11 +109,12 @@ public class OutToBinary {
     System.out.println("function body count: " + ins.size());
 
     //body
+    int cc = 1;
     for(Instruction i : ins){
       //type
       List<Byte> type = int2bytes(1, i.getCode());
       output.addAll(type);
-      System.out.println("instruction: " + i.getOpt() + " ,num: " + i.getNum());
+      System.out.println(cc++ + " instruction: " + i.getOpt() + " ,num: " + i.getNum());
 
       if(i.getNum() != null){
         List<Byte>  x;

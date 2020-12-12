@@ -344,6 +344,7 @@ public final class Analyser {
         }
         res_ins.add(getLocalOrParamAddress(token));
         res_ins.addAll(analyseExpr());
+        res_ins.addAll(expr_stack.addAllReset());
         initializeSymbol(token.getValueString(), token.getStartPos());
         res_ins.add(new Instruction(Operation.store64));
         return res_ins;
