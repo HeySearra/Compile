@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 public class App {
     public static void main(String[] args) throws IOException, CompileError {
-//        try {
+        try {
             InputStream input;
             PrintStream output;
             DataOutputStream out;
@@ -34,9 +34,9 @@ public class App {
             for(int i=0;i<bs.size();i++)
               temp[i]=bs.get(i);
             out.write(temp);
-//        }catch (Exception e){
-//            System.exit(-1);
-//        }
+        }catch (Exception e){
+            System.exit(-1);
+        }
     }
 
     private static Tokenizer tokenize(StringIter iter) {
