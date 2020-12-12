@@ -336,6 +336,9 @@ public final class Analyser {
     private List<Instruction> analyseAssignExpr(Token token) throws CompileError{
         List<Instruction> res_ins = new ArrayList<>();
         expect(TokenType.ASSIGN);
+        if(this.onAssign){
+            throw new AnalyzeError(ErrorCode.AssignFaild, peek().getStartPos());
+        }
         res_ins.add(getLocalOrParamAddress(token));
         res_ins.addAll(analyseExpr());
         initializeSymbol(token.getValueString(), token.getStartPos());
