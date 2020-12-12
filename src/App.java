@@ -13,12 +13,12 @@ import java.util.Scanner;
 
 public class App {
     public static void main(String[] args) throws IOException, CompileError {
-        try {
+//        try {
             InputStream input;
             PrintStream output;
             DataOutputStream out;
-            System.out.println(args[1]);
-            String inputFileName = args[1], outputFileName = args[2];
+            System.out.println(args[0]);
+            String inputFileName = args[0], outputFileName = args[1];
             input = new FileInputStream(new File(inputFileName));
             out = new DataOutputStream(new FileOutputStream(new File(outputFileName)));
             Scanner scanner;
@@ -34,9 +34,9 @@ public class App {
             for(int i=0;i<bs.size();i++)
               temp[i]=bs.get(i);
             out.write(temp);
-        }catch (Exception e){
-            System.exit(-1);
-        }
+//        }catch (Exception e){
+//            System.exit(-1);
+//        }
     }
 
     private static Tokenizer tokenize(StringIter iter) {
