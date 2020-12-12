@@ -232,7 +232,7 @@ public class Tokenizer {
         if (!Character.isLetter(it.peekChar())) {
             throw new TokenizeError(ErrorCode.InvalidInput, it.currentPos());
         }
-        while (!it.isEOF() && Character.isLetterOrDigit(it.peekChar())) {
+        while (!it.isEOF() && (Character.isLetterOrDigit(it.peekChar()) || it.peekChar() == '_')) {
             b.append(it.nextChar());
         }
         String s = b.toString();
