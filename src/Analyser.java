@@ -29,9 +29,8 @@ public final class Analyser {
         this.global_instructions = new ArrayList<>();
     }
 
-    public List<Instruction> analyse() throws CompileError {
+    public void analyse() throws CompileError {
         analyseProgram();
-        return global_instructions;
     }
 
     /**
@@ -74,22 +73,6 @@ public final class Analyser {
             }
         }
         return false;
-    }
-
-    /**
-     * 如果下一个 token 的类型是 tt，则前进一个 token 并返回这个 token
-     * 
-     * @param tt 类型
-     * @return 如果匹配则返回这个 token，否则返回 null
-     * @throws TokenizeError
-     */
-    private Token nextIf(TokenType tt) throws TokenizeError {
-        var token = peek();
-        if (token.getTokenType() == tt) {
-            return next();
-        } else {
-            return null;
-        }
     }
 
     private Token expect(TokenType... tt) throws CompileError {
@@ -141,11 +124,10 @@ public final class Analyser {
         }
     }
 
-    private void functionAddParam(TokenType tt, String name, Pos pos) throws AnalyzeError {
-        SymbolEntry se = this.def_table.addSymbol(this.param_slot++, name, SymbolType.Param, tt, true, false, pos, null, 1);
+    private void functionAddParam(TokenType tt, String name, Pos pos, boolean is_const) throws AnalyzeError {
+        SymbolEntry se = this.def_table.addSymbol(this.param_slot++, name, SymbolType.Param, tt, true, is_const, pos, null, 1);
         this.param_table.add(se);
     }
-
 
     private SymbolEntry functionAddLocal(TokenType tt, String name,Boolean is_init, Boolean is_const, Pos pos, int level) throws AnalyzeError {
         SymbolEntry se = this.def_table.addSymbol(this.local_slot++, name, SymbolType.Local, tt, is_init, is_const, pos, null, level);
@@ -153,17 +135,14 @@ public final class Analyser {
         return se;
     }
 
-    private void generateInstruction(){
-
-    }
-
     public Function getStartFunction() throws AnalyzeError {
-        return this.def_table.generate();
+        return this.def_table.generate(this.global_instructions);
     }
 
     private void analyseProgram() throws CompileError {
         this.def_table = new Definition();
         this.expr_stack = new ExprStack();
+        this.global_instructions = new ArrayList<>();
         while(!check(TokenType.EOF)){
             if(check(TokenType.FN_KW)){
                 analyseFunction();
@@ -171,7 +150,7 @@ public final class Analyser {
                 this.global_instructions.addAll(analyseDeclStmt(0));
             }else{
                 throw new ExpectedTokenError(
-                    Format.generateList(TokenType.LET_KW, TokenType.CONST_KW, TokenType.FN_KW), next());
+                    Format.generateList(TokenType.LET_KW, TokenType.CONST_KW, TokenType.FN_KW), peek());
             }
         }
         this.def_table.instruction = this.global_instructions;
@@ -190,16 +169,21 @@ public final class Analyser {
         this.def_table.level = 1;
         this.onAssign = false;
 
+        Function func = this.def_table.addFunction(nameToken.getValueString(), null, nameToken.getStartPos());
         expect(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN))
             analyseFunctionParamList();
+        func.setParams(this.param_table);
+        func.setParamSlot(this.param_slot);
         expect(TokenType.R_PAREN);
         expect(TokenType.ARROW);
         Token return_tt = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
         this.return_type = return_tt.getTokenType();
-        this.def_table.addFunction(nameToken.getValueString(), return_tt.getTokenType(), nameToken.getStartPos());
+        func.setReturnType(this.return_type);
         this.function_body = analyseBlockStmt(return_tt.getTokenType(), 1);
-        this.def_table.getFunction(nameToken.getValueString()).setFunctionBody(this.function_body);
+        func.setFunctionBody(this.function_body);
+        func.setLocals(this.local_table);
+        func.setLocalSlot(this.local_slot);
     }
 
     // return_type
@@ -223,26 +207,19 @@ public final class Analyser {
         List<Instruction> res_ins = new ArrayList<>();
         if(check(TokenType.LET_KW) || check((TokenType.CONST_KW))){
             res_ins.addAll(analyseDeclStmt(level));
-            return null;
         } else if(check(TokenType.IF_KW)){
             res_ins.addAll(analyseIfStmt(level));
-            return null;
         } else if(check(TokenType.WHILE_KW)){
             res_ins.addAll(analyseWhileStmt(level));
-            return null;
         } else if(check(TokenType.BREAK_KW)){
             res_ins.addAll(analyseBreakStmt());
-            return null;
         } else if(check(TokenType.CONTINUE_KW)){
             res_ins.addAll(analyseContinueStmt());
-            return null;
         } else if(check(TokenType.RETURN_KW)){
             res_ins.addAll(analyseReturnStmt());
-            return null;
         } else if(check(TokenType.L_BRACE)){
             this.def_table.level = level + 1;
             res_ins.addAll(analyseBlockStmt(return_type, level + 1));
-            return null;
         } else if(check(TokenType.SEMICOLON)){
             expect(TokenType.SEMICOLON);
         } else{
@@ -340,7 +317,6 @@ public final class Analyser {
 
     private List<Instruction> analyseIdentExpr(Token token) throws CompileError{
         List<Instruction> res_ins = new ArrayList<>();
-        System.out.println("token:" + token);
         if(this.def_table.getSymbol(token.getValueString()) == null){
             throw new AnalyzeError(ErrorCode.NotDeclared, token.getStartPos());
         }
@@ -348,7 +324,7 @@ public final class Analyser {
             throw new AnalyzeError(ErrorCode.NotInitialized, token.getStartPos());
         }
         res_ins.add(getLocalOrParamAddress(token));
-        res_ins.add(new Instruction(Operation.store64));
+        res_ins.add(new Instruction(Operation.load64));
         return res_ins;
     }
 
@@ -363,10 +339,6 @@ public final class Analyser {
     }
 
     private List<Instruction> analyseCallExpr(Token token) throws CompileError{
-        SymbolEntry sym = this.def_table.getSymbol(token.getValueString());
-        if(sym == null){
-            throw new AnalyzeError(ErrorCode.NotDeclared, token.getStartPos());
-        }
         Function func = this.def_table.getFunction(token.getValueString());
         List<Instruction> res_ins = new ArrayList<>();
 
@@ -383,18 +355,19 @@ public final class Analyser {
     }
 
     private List<Instruction> analyseCallParamList(List<SymbolEntry> param_list) throws CompileError{
-        int param_num = 0;
-        analyseExpr();
+        int param_num = 1;
+        List<Instruction> res_ins = new ArrayList<>(analyseExpr());
         // 将栈中表达式全计算完
-        List<Instruction> res_ins = new ArrayList<>(this.expr_stack.addAllReset());
+        res_ins.addAll(this.expr_stack.addAllReset());
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             // todo: 返回值类型检查
-            analyseExpr();
+            res_ins.addAll(analyseExpr());
             res_ins.addAll(this.expr_stack.addAllReset());
             param_num++;
         }
         if(param_num != param_list.size()){
+            System.out.println("当前参数个数：" + param_num + " ，期望参数个数：" + param_list.size());
             throw new AnalyzeError(ErrorCode.ParamNumWrong, this.peekedToken.getStartPos());
         }
         return res_ins;
@@ -424,15 +397,18 @@ public final class Analyser {
         List<Instruction> res_ins = new ArrayList<>();
         expect(TokenType.RETURN_KW);
         if(!check(TokenType.SEMICOLON)){
-            if(this.return_type != TokenType.INT_KW){
-                System.out.println(this.return_type);
+            if(this.return_type == TokenType.VOID_KW){
                 throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peekedToken.getStartPos());
             }
+            // todo: 返回值类型检查
             // 返回值off是0
             res_ins.add(new Instruction(Operation.arga, (long)0));
-            this.return_type = TokenType.INT_KW;
-            analyseExpr();
+            res_ins.addAll(analyseExpr());
+            res_ins.addAll(expr_stack.addAllReset());
+            res_ins.add(new Instruction(Operation.store64));
         }
+        res_ins.addAll(expr_stack.addAllReset());
+        res_ins.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
         return res_ins;
     }
@@ -485,8 +461,8 @@ public final class Analyser {
     private List<Instruction> analyseIfStmt(int level) throws CompileError{
         expect(TokenType.IF_KW);
 
-        analyseExpr();
-        List<Instruction> res_ins = new ArrayList<>(expr_stack.addAllReset());
+        List<Instruction> res_ins = new ArrayList<>(analyseExpr());
+        res_ins.addAll(expr_stack.addAllReset());
 
         //brTrue
         res_ins.add(new Instruction(Operation.br_true, (long)1));
@@ -544,16 +520,15 @@ public final class Analyser {
     }
 
     private void analyseFunctionParamList() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
         analyseFunctionParam();
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             analyseFunctionParam();
         }
+
     }
 
     private void analyseFunctionParam() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
         boolean is_const = false;
         if(check(TokenType.CONST_KW)){
             expect(TokenType.CONST_KW);
@@ -562,8 +537,7 @@ public final class Analyser {
         Token nameToken = expect(TokenType.IDENT);
         expect(TokenType.COLON);
         Token type = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
-        functionAddParam(type.getTokenType(), nameToken.getValueString(), nameToken.getStartPos());
-
+        functionAddParam(type.getTokenType(), nameToken.getValueString(), nameToken.getStartPos(), is_const);
     }
 
     // level == 0是全局
@@ -586,7 +560,7 @@ public final class Analyser {
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, nameToken.getStartPos());
         }
         expect(TokenType.COLON);
-        Token type = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);;
+        Token type = expect(TokenType.INT_KW, TokenType.DOUBLE_KW);
         expect(TokenType.ASSIGN);
         this.onAssign = true;
         if(level == 0){// 全局
@@ -617,7 +591,7 @@ public final class Analyser {
             this.onAssign = true;
             if(level == 0){
                 // 全局变量
-                int global_id = this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), null);
+                int global_id = this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
                 res_ins.add(new Instruction(Operation.globa, (long)global_id));
             }
             else{
@@ -633,7 +607,7 @@ public final class Analyser {
         else{
             if(level == 0){
                 // 全局变量
-                this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), null);
+                this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
             }
             else{
                 // 局部变量

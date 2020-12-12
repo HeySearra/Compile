@@ -20,7 +20,6 @@ public class App {
             System.out.println(args[1]);
             String inputFileName = args[1], outputFileName = args[2];
             input = new FileInputStream(new File(inputFileName));
-            output = new PrintStream(new FileOutputStream(new File(outputFileName)));
             out = new DataOutputStream(new FileOutputStream(new File(outputFileName)));
             Scanner scanner;
             scanner = new Scanner(input);
@@ -35,15 +34,6 @@ public class App {
             for(int i=0;i<bs.size();i++)
               temp[i]=bs.get(i);
             out.write(temp);
-            //            OutToBinary binary = new OutToBinary(Analyser.getGlobals(), Analyser.getStartFunction(), Analyser.getFunctionDefs());
-            //
-            //            DataOutputStream out = new DataOutputStream(new FileOutputStream(new File(args[1])));
-            //            List<Byte> bytes = binary.generate();
-            //            byte[] resultBytes = new byte[bytes.size()];
-            //            for (int i = 0; i < bytes.size(); ++i) {
-            //                resultBytes[i] = bytes.get(i);
-            //            }
-            //            out.write(resultBytes);
 //        }catch (Exception e){
 //            System.exit(-1);
 //        }

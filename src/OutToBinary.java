@@ -1,4 +1,5 @@
 import java.io.*;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,13 +31,16 @@ public class OutToBinary {
 
     //globals.count
     output.addAll(int2bytes(4, def_table.getGlobalListCount()));
+    System.out.println("globals.count: " + def_table.getGlobalListCount());
 
-    //out.writeBytes(globalCount.toString());
-
+    System.out.println("-----------------输出global数组----------------");
+    int i = 0;
     for(SymbolEntry g : def_table.getGlobalList()){
-      //isConst
-      List<Byte> isConst=int2bytes(1, g.isConstant().compareTo(false));
-      output.addAll(isConst);
+      System.out.println(i++ + "     -----------");
+      //is_const
+      List<Byte> is_const=int2bytes(1, g.isConstant().compareTo(false));
+      output.addAll(is_const);
+      System.out.println("is_const: " + g.isConstant().compareTo(false));
 
       List<Byte> global_value_count;
       List<Byte> global_value;
@@ -51,56 +55,65 @@ public class OutToBinary {
       }
 
       output.addAll(global_value_count);
+      System.out.println("global value count: " + global_value.size());
       output.addAll(global_value);
+      System.out.println("global value: " + g.getValue().toString());
     }
 
     //functions.count
-    List<Byte> functionsCount=int2bytes(4, def_table.getFunctionListCount() + 1);
+    List<Byte> functionsCount=int2bytes(4, this.def_table.getFunctionListCount() + 1);
     output.addAll(functionsCount);
+    System.out.println("function count: " + this.def_table.getFunctionListCount());
 
+    System.out.println("-----------------输出function数组----------------");
     generateFunction(start);
-
+    i = 1;
     for (String name: def_table.getFunctionList().keySet()) {
-      generateFunction(def_table.getFunctionList().get(name));
+      if(!name.equals("_start") && !this.def_table.isSTDFunction(name)){
+        System.out.println(i++ + "     -----------");
+        generateFunction(def_table.getFunctionList().get(name));
+      }
     }
 
     return output;
   }
 
-  private void generateFunction(Function function) throws IOException {
+  private void generateFunction(Function function){
     //name
-    List<Byte> name = int2bytes(4,function.getId());
+    List<Byte> name = int2bytes(4, function.getId());
     output.addAll(name);
+    System.out.println("function name: " + function.getId());
     //out.writeBytes(name.toString());
 
     //retSlot
-    List<Byte> retSlots = int2bytes(4,function.getReturnSlot());
+    List<Byte> retSlots = int2bytes(4, function.getReturnSlot());
     output.addAll(retSlots);
+    System.out.println("function return slot: " + function.getReturnSlot());
     //out.writeBytes(retSlots.toString());
 
     //paramsSlots
-    List<Byte> paramsSlots=int2bytes(4,function.getParamSlot());
+    List<Byte> paramsSlots=int2bytes(4, function.getParamSlot());
     output.addAll(paramsSlots);
-    //out.writeBytes(paramsSlots.toString());
+    System.out.println("function param slot: " + function.getParamSlot());
 
     //locSlots
-    List<Byte> locSlots=int2bytes(4,function.getLocalSlot());
+    List<Byte> locSlots=int2bytes(4, function.getLocalSlot());
     output.addAll(locSlots);
-    //out.writeBytes(locSlots.toString());
+    System.out.println("function local slot: " + function.getLocalSlot());
 
     List<Instruction> ins = function.getFunctionBody();
 
     //bodyCount
     List<Byte> bodyCount=int2bytes(4, ins.size());
     output.addAll(bodyCount);
-    //out.writeBytes(bodyCount.toString());
+    System.out.println("function body count: " + ins.size());
 
     //body
     for(Instruction i : ins){
       //type
       List<Byte> type = int2bytes(1, i.getCode());
       output.addAll(type);
-      //out.writeBytes(type.toString());
+      System.out.println("instruction: " + i.getOpt() + " ,num: " + i.getNum());
 
       if(i.getNum() != null){
         List<Byte>  x;
@@ -110,7 +123,6 @@ public class OutToBinary {
         else
           x = long2bytes(4, i.getNum());
         output.addAll(x);
-        //out.writeBytes(x.toString());
       }
     }
   }

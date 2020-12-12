@@ -16,7 +16,7 @@ public class Definition {
 
     int nextOffset = 0;
 
-    int symbol_list_index = 1;
+    int symbol_list_index = 0;
 
     List<Instruction> instruction;
 
@@ -47,26 +47,56 @@ public class Definition {
             case "getint":
                 func = this.addFunction("getint", TokenType.INT_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.INT_KW);
+                func.setParamSlot(0);
                 return func;
             case "getdouble":
                 func = this.addFunction("getdouble", TokenType.DOUBLE_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.DOUBLE_KW);
+                func.setParamSlot(0);
                 return func;
             case "putint":
                 func = this.addFunction("putint", TokenType.VOID_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.VOID_KW);
+                func.setParamSlot(1);
+                func.setParams(new ArrayList<>(Collections.singletonList(
+                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.INT_KW, false, false,
+                        null, -1))));
                 return func;
             case "putdouble":
                 func = this.addFunction("putdouble", TokenType.VOID_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.VOID_KW);
+                func.setParamSlot(1);
+                func.setParams(new ArrayList<>(Collections.singletonList(
+                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.DOUBLE_KW, false, false,
+                        null, -1))));
                 return func;
             case "putchar":
                 func = this.addFunction("putchar", TokenType.VOID_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.VOID_KW);
+                func.setParamSlot(1);
+                func.setParams(new ArrayList<>(Collections.singletonList(
+                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.INT_KW, false, false,
+                        null, -1))));
+                return func;
+            case "putstr":
+                func = this.addFunction("putstr", TokenType.VOID_KW, new Pos(-1, -1));
+                func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.VOID_KW);
+                func.setParamSlot(1);
+                func.setParams(new ArrayList<>(Collections.singletonList(
+                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.INT_KW, false, false,
+                        null, -1))));
                 return func;
             case "putln":
                 func = this.addFunction("putln", TokenType.DOUBLE_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.VOID_KW);
+                func.setParamSlot(0);
                 return func;
             default:
                 throw new AnalyzeError(ErrorCode.NotDeclared, new Pos(-2, -2));
@@ -76,6 +106,7 @@ public class Definition {
     // value是他的值
     // 返回的是global的id
     public int addGlobal(SymbolType type, String name, TokenType tt, boolean is_ini, boolean is_const, Pos pos, Object value) throws AnalyzeError {
+        System.out.println("add global: " + name + "\t\t index: " + this.global_list.size());
         if(getSymbol(name) != null){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
         }
@@ -100,14 +131,23 @@ public class Definition {
 
     public HashMap<String, Function> getFunctionList() { return function_list; }
 
-    public int getFunctionListCount(){ return this.function_list.size(); }
+    public int getFunctionListCount(){
+        int count = 0;
+        for(String name: this.function_list.keySet()){
+            if(!name.equals("_start") && !isSTDFunction(name)){
+                count++;
+            }
+        }
+        return count;
+    }
 
     public Function addFunction(String name, TokenType return_tt, Pos pos) throws AnalyzeError {
+        System.out.println("add function: " + name + "\t\t index: " + this.global_list.size());
         if(this.function_list.get(name) != null || getSymbol(name, level) != null){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
         }
         Function func;
-        SymbolEntry se = this.addSymbol(this.global_list.size(), name, SymbolType.Function, return_tt, true, true, pos, null, 0);
+        SymbolEntry se = this.addSymbol(this.global_list.size(), name, SymbolType.Function, return_tt, true, true, pos, name, 0);
         func = new Function(se, name, pos, return_tt);
         this.function_list.put(name, func);
         this.global_list.add(se);
@@ -116,7 +156,7 @@ public class Definition {
 
     // todo: 局部变量和全局可以重名，和函数可以重名吗？
     public SymbolEntry addSymbol(int id, String name, SymbolType type, TokenType tt, boolean is_init, boolean is_const, Pos curPos, Object value, int level) throws AnalyzeError {
-        System.out.println("add symbol " + name + " index: " + this.symbol_list_index + " type: " + tt + " level: " + level);
+        System.out.println("add symbol " + name + "\t\t index: " + this.symbol_list_index + "\t\t type: " + tt + "\t\t level: " + level);
         SymbolEntry se = getSymbol(name);
         // 同级存在重复定义
         if(se != null && se.getLevel() == level){
@@ -124,13 +164,13 @@ public class Definition {
         }
         se = new SymbolEntry(id, type, name, tt, is_init, is_const, value, level);
         this.symbol_list.put(this.symbol_list_index++, se);
-        System.out.println(this.symbol_list.size());
+//        System.out.println(this.symbol_list.size());
         return se;
     }
 
     public SymbolEntry getSymbol(String name){
         // todo: 从level最高的开始查， hashmap排序
-        System.out.println("get symbol: " + name + " now_level: " + this.level);
+//        System.out.println("get symbol: " + name + " now_level: " + this.level);
         for(int i = this.level; i >= 0; i--){
             for(Integer a :this.symbol_list.keySet()){
                 SymbolEntry sym = this.symbol_list.get(a);
@@ -144,7 +184,7 @@ public class Definition {
     }
 
     public SymbolEntry getSymbol(String name, int level){
-        System.out.println("get symbol: " + name + " level: " + this.level);
+//        System.out.println("get symbol: " + name + " level: " + this.level);
         for(Integer a :this.symbol_list.keySet()){
             SymbolEntry sym = this.symbol_list.get(a);
             if(sym.getLevel() == level && sym.getName().equals(name)){
@@ -166,15 +206,15 @@ public class Definition {
         return func;
     }
 
-    public Function generate() throws AnalyzeError {
+    public Function generate(List<Instruction> global_ins) throws AnalyzeError {
         Function main_func = getFunction("main");
         if(main_func == null){
             throw new AnalyzeError(ErrorCode.CantFindMain, new Pos(0,0));
         }
         Function start_func = getFunction("_start");
-        List<Instruction> instructions = new ArrayList<>();
+        List<Instruction> instructions = new ArrayList<>(global_ins);
         instructions.add(new Instruction(Operation.stackalloc, (long)main_func.getReturnSlot()));
-        instructions.add(new Instruction(Operation.call, (long)main_func.getId()));
+        instructions.add(new Instruction(Operation.callname, (long)main_func.getId()));
         start_func.setFunctionBody(instructions);
         return start_func;
     }
@@ -184,7 +224,7 @@ public class Definition {
         for(Integer i: this.symbol_list.keySet()){
             if(this.symbol_list.get(i).getLevel() == this.level){
                 res.put(i, this.symbol_list.get(i));
-                System.out.println("remove symbol " + this.symbol_list.get(i).getName() + " type: " + this.symbol_list.get(i).getType() + " level: " + this.level);
+                System.out.println("remove symbol " + this.symbol_list.get(i).getName() + "\t\t type: " + this.symbol_list.get(i).getType() + "\t\t level: " + this.level);
             }
         }
         for(Integer i : res.keySet()){

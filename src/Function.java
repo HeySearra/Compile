@@ -53,9 +53,10 @@ public class Function {
 
   public void setParams(List<SymbolEntry> params) {
     this.param_table = params;
-    for(SymbolEntry t: params){
+  }
 
-    }
+  public void setLocals(List<SymbolEntry> locals) {
+    this.local_table = locals;
   }
 
   public int getId() { return se.getId(); }
