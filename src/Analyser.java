@@ -394,7 +394,7 @@ public final class Analyser {
         List<Instruction> res_ins = new ArrayList<>();
         expect(TokenType.L_PAREN);
         res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
-        analyseExpr();
+        res_ins.addAll(analyseExpr());
         // 这里为什么没有allreset
         expect(TokenType.R_PAREN);
         res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
