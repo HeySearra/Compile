@@ -103,28 +103,6 @@ public class Definition {
         }
     }
 
-    // value是他的值
-    // 返回的是global的id
-    public int addGlobal(SymbolType type, String name, TokenType tt, boolean is_ini, boolean is_const, Pos pos, Object value) throws AnalyzeError {
-        System.out.println("add global: " + name + "\t\t index: " + this.global_list.size());
-        if(getSymbol(name) != null){
-            throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
-        }
-        SymbolEntry se = new SymbolEntry(this.global_list.size(), type, name, tt, is_ini, is_const, value, 0);
-        this.global_list.add(se);
-        this.symbol_list.put(this.symbol_list.size(), se);
-        return se.getId();
-    }
-
-    public int getGlobalId(String name) throws AnalyzeError {
-        for(SymbolEntry se: global_list){
-            if(se.getName().equals(name)){
-                return se.getId();
-            }
-        }
-        throw new AnalyzeError(ErrorCode.NoSuchGlobal, new Pos(-1, -1));
-    }
-
     public List<SymbolEntry> getGlobalList() { return this.global_list; }
 
     public int getGlobalListCount(){ return this.global_list.size(); }
@@ -140,6 +118,28 @@ public class Definition {
         }
         return count;
     }
+    // value是他的值
+    // 返回的是global的id
+    public int addGlobal(SymbolType type, String name, TokenType tt, boolean is_ini, boolean is_const, Pos pos, Object value) throws AnalyzeError {
+        System.out.println("add global: " + name + "\t\t index: " + this.global_list.size());
+        if(getSymbol(name) != null){
+            throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
+        }
+        SymbolEntry se = addSymbol(this.global_list.size(), name, SymbolType.Global, tt, is_ini, is_const, pos, value, 0);
+        this.global_list.add(se);
+        return se.getId();
+    }
+
+    public int getGlobalId(String name) throws AnalyzeError {
+        for(SymbolEntry se: global_list){
+            if(se.getName().equals(name)){
+                return se.getId();
+            }
+        }
+        throw new AnalyzeError(ErrorCode.NoSuchGlobal, new Pos(-1, -1));
+    }
+
+
 
     public Function addFunction(String name, TokenType return_tt, Pos pos) throws AnalyzeError {
         System.out.println("add function: " + name + "\t\t index: " + this.global_list.size());
@@ -157,9 +157,9 @@ public class Definition {
     // todo: 局部变量和全局可以重名，和函数可以重名吗？
     public SymbolEntry addSymbol(int id, String name, SymbolType type, TokenType tt, boolean is_init, boolean is_const, Pos curPos, Object value, int level) throws AnalyzeError {
         System.out.println("add symbol " + name + "\t\t index: " + this.symbol_list_index + "\t\t type: " + tt + "\t\t level: " + level);
-        SymbolEntry se = getSymbol(name);
+        SymbolEntry se = getSymbol(name, level);
         // 同级存在重复定义
-        if(se != null && se.getLevel() == level){
+        if(se != null){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         }
         se = new SymbolEntry(id, type, name, tt, is_init, is_const, value, level);
