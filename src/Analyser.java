@@ -117,7 +117,8 @@ public final class Analyser {
         if(sym.getType() == SymbolType.Function)
             throw new AnalyzeError(ErrorCode.FunctionHasNoAddr, token.getStartPos());
         else if(sym.getType() == SymbolType.Param){
-            return new Instruction(Operation.arga, (long)sym.getId());
+            Function func = this.def_table.getFunction(sym.getName());
+            return new Instruction(Operation.arga, ((long)sym.getId() + func.getReturnSlot()));
         }else if(sym.getType() == SymbolType.Local) {
             return new Instruction(Operation.loca, (long)sym.getId());
         }else{
