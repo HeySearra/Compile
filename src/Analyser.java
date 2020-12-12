@@ -23,6 +23,7 @@ public final class Analyser {
     int local_slot;
     TokenType return_type;
     private boolean onAssign;
+    boolean is_returned;
 
     public Analyser(Tokenizer tokenizer) {
         this.tokenizer = tokenizer;
@@ -168,6 +169,7 @@ public final class Analyser {
         this.return_type = null;
         this.def_table.level = 1;
         this.onAssign = false;
+        this.is_returned = false;
 
         Function func = this.def_table.addFunction(nameToken.getValueString(), null, nameToken.getStartPos());
         expect(TokenType.L_PAREN);
@@ -181,6 +183,9 @@ public final class Analyser {
         this.return_type = return_tt.getTokenType();
         func.setReturnType(this.return_type);
         this.function_body = analyseBlockStmt(return_tt.getTokenType(), 1);
+        if(!this.is_returned){
+            this.function_body.add(new Instruction(Operation.ret));
+        }
         func.setFunctionBody(this.function_body);
         func.setLocals(this.local_table);
         func.setLocalSlot(this.local_slot);
@@ -402,6 +407,7 @@ public final class Analyser {
         List<Instruction> res_ins = new ArrayList<>();
         expect(TokenType.RETURN_KW);
         if(!check(TokenType.SEMICOLON)){
+            // 有返回值
             if(this.return_type == TokenType.VOID_KW){
                 throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peekedToken.getStartPos());
             }
@@ -412,9 +418,13 @@ public final class Analyser {
             res_ins.addAll(expr_stack.addAllReset());
             res_ins.add(new Instruction(Operation.store64));
         }
+        else if(this.return_type != TokenType.VOID_KW){
+            throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
+        }
         res_ins.addAll(expr_stack.addAllReset());
         res_ins.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
+        this.is_returned = true;
         return res_ins;
     }
 
