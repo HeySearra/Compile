@@ -134,7 +134,7 @@ public class Definition {
     public int getFunctionListCount(){
         int count = 0;
         for(String name: this.function_list.keySet()){
-            if(!name.equals("_start") && !isSTDFunction(name)){
+            if(!isSTDFunction(name)){
                 count++;
             }
         }
@@ -214,7 +214,7 @@ public class Definition {
         Function start_func = getFunction("_start");
         List<Instruction> instructions = new ArrayList<>(global_ins);
         instructions.add(new Instruction(Operation.stackalloc, (long)main_func.getReturnSlot()));
-        instructions.add(new Instruction(Operation.callname, (long)main_func.getId()));
+        instructions.add(new Instruction(Operation.call, (long)main_func.getId()));
         start_func.setFunctionBody(instructions);
         return start_func;
     }

@@ -61,7 +61,7 @@ public class OutToBinary {
     }
 
     //functions.count
-    List<Byte> functionsCount=int2bytes(4, this.def_table.getFunctionListCount() + 1);
+    List<Byte> functionsCount=int2bytes(4, this.def_table.getFunctionListCount());
     output.addAll(functionsCount);
     System.out.println("function count: " + this.def_table.getFunctionListCount());
 

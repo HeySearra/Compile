@@ -349,8 +349,13 @@ public final class Analyser {
             // 准备参数，分配空间并放入参数
             res_ins.addAll(analyseCallParamList(func.getParams()));
         }
+        if(func.isSTDFunction()){
+            res_ins.add(new Instruction(Operation.callname, (long)func.getId()));
+        }
+        else{
+            res_ins.add(new Instruction(Operation.call, (long)func.getId()));
+        }
         expect(TokenType.R_PAREN);
-        res_ins.add(new Instruction(Operation.callname, (long)func.getId()));
         return res_ins;
     }
 
