@@ -16,6 +16,7 @@ public final class Analyser {
 
 
     // 暂存函数的相关内容
+    Function function;
     List<Instruction> function_body;
     List<SymbolEntry> param_table;
     int param_slot;
@@ -117,8 +118,7 @@ public final class Analyser {
         if(sym.getType() == SymbolType.Function)
             throw new AnalyzeError(ErrorCode.FunctionHasNoAddr, token.getStartPos());
         else if(sym.getType() == SymbolType.Param){
-            Function func = this.def_table.getFunction(sym.getName());
-            return new Instruction(Operation.arga, ((long)sym.getId() + func.getReturnSlot()));
+            return new Instruction(Operation.arga, ((long)sym.getId() + this.function.getReturnSlot()));
         }else if(sym.getType() == SymbolType.Local) {
             return new Instruction(Operation.loca, (long)sym.getId());
         }else{
@@ -162,6 +162,7 @@ public final class Analyser {
     private void analyseFunction() throws CompileError{
         expect(TokenType.FN_KW);
         Token nameToken = expect(TokenType.IDENT);
+        this.function = null;
         this.function_body = new ArrayList<>();
         this.param_table = new ArrayList<>();
         this.param_slot = 0;
@@ -173,6 +174,7 @@ public final class Analyser {
         this.is_returned = false;
 
         Function func = this.def_table.addFunction(nameToken.getValueString(), null, nameToken.getStartPos());
+        this.function = func;
         expect(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN))
             analyseFunctionParamList();
@@ -293,7 +295,7 @@ public final class Analyser {
         }
         else if(token.getTokenType() == TokenType.STRING_LITERAL){
             // 新建全局变量， 变量名是该字符串，变量值也是该字符串
-            int global_index = this.def_table.addGlobal(SymbolType.Global, token.getValueString(),
+            int global_index = this.def_table.addGlobal(token.getValueString(),
                 TokenType.STRING_LITERAL, true, true, token.getStartPos(), token.getValueString());
             res_ins.add(new Instruction(Operation.push, (long)global_index));
         }
@@ -588,7 +590,7 @@ public final class Analyser {
         expect(TokenType.ASSIGN);
         this.onAssign = true;
         if(level == 0){// 全局
-            int global_id = this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), false, true, nameToken.getStartPos(), 0);
+            int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), false, true, nameToken.getStartPos(), 0);
             res_ins.add(new Instruction(Operation.globa, (long)global_id));
         }
         else{
@@ -615,7 +617,7 @@ public final class Analyser {
             this.onAssign = true;
             if(level == 0){
                 // 全局变量
-                int global_id = this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
                 res_ins.add(new Instruction(Operation.globa, (long)global_id));
             }
             else{
@@ -631,7 +633,7 @@ public final class Analyser {
         else{
             if(level == 0){
                 // 全局变量
-                this.def_table.addGlobal(SymbolType.Global, nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
             }
             else{
                 // 局部变量

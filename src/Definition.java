@@ -43,7 +43,7 @@ public class Definition {
             throw new AnalyzeError(ErrorCode.NotSTDFunction, new Pos(-1, -1));
         }
         Function func;
-        switch (name){
+        switch (name) {
             case "getint":
                 func = this.addFunction("getint", TokenType.INT_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
@@ -120,7 +120,7 @@ public class Definition {
     }
     // value是他的值
     // 返回的是global的id
-    public int addGlobal(SymbolType type, String name, TokenType tt, boolean is_ini, boolean is_const, Pos pos, Object value) throws AnalyzeError {
+    public int addGlobal(String name, TokenType tt, boolean is_ini, boolean is_const, Pos pos, Object value) throws AnalyzeError {
         System.out.println("add global: " + name + "\t\t index: " + this.global_list.size());
         if(getSymbol(name) != null){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
