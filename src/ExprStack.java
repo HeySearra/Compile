@@ -104,8 +104,8 @@ public class ExprStack {
 
   public List<Instruction> addTokenAndGenerateInstruction(TokenType tt){
     List<Instruction> instructions=new ArrayList<>();
-    if (operation_stack.size() < 1){
-      operation_stack.add(tt);
+    if (operation_stack.empty()){
+      operation_stack.push(tt);
       return instructions;
     }
 

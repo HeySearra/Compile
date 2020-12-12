@@ -59,15 +59,15 @@ public class App {
 //            iter = new StringIter(scanner);
 //            tokenizer = tokenize(iter);
 
-//            Analyser analyzer = new Analyser(tokenizer);
-//            analyzer.analyse();
-//
-//            OutToBinary outPutBinary=new OutToBinary(analyzer.def_table, analyzer.getStartFunction());
-//            List<Byte> bs=outPutBinary.generate();
-//            byte[] temp=new byte[bs.size()];
-//            for(int i=0;i<bs.size();i++)
-//              temp[i]=bs.get(i);
-//            out.write(temp);
+            Analyser analyzer = new Analyser(tokenizer);
+            analyzer.analyse();
+
+            OutToBinary outPutBinary=new OutToBinary(analyzer.def_table, analyzer.getStartFunction());
+            List<Byte> bs=outPutBinary.generate();
+            byte[] temp=new byte[bs.size()];
+            for(int i=0;i<bs.size();i++)
+              temp[i]=bs.get(i);
+            out.write(temp);
 
 //        }catch (Exception e){
 //            System.exit(-1);

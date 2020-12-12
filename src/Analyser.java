@@ -399,9 +399,9 @@ public final class Analyser {
         expect(TokenType.L_PAREN);
         res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
         res_ins.addAll(analyseExpr());
-        // 这里为什么没有allreset
         expect(TokenType.R_PAREN);
         res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
+        res_ins.addAll(expr_stack.addAllReset());
         return res_ins;
     }
 
