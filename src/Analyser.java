@@ -127,6 +127,24 @@ public final class Analyser {
         }
     }
 
+    private void addInstruction(Instruction ins){
+        if(this.def_table.getLevel() != 0){
+            this.function_body.add(ins);
+        }
+        else{
+            this.global_instructions.add(ins);
+        }
+    }
+
+    private void addAllInstruction(List<Instruction> ins){
+        if(this.def_table.getLevel() != 0){
+            this.function_body.addAll(ins);
+        }
+        else{
+            this.global_instructions.addAll(ins);
+        }
+    }
+
     private void functionAddParam(TokenType tt, String name, Pos pos, boolean is_const) throws AnalyzeError {
         SymbolEntry se = this.def_table.addSymbol(this.param_slot++, name, SymbolType.Param, tt, true, is_const, pos, null, 1);
         this.param_table.add(se);
@@ -188,7 +206,7 @@ public final class Analyser {
         func.setReturnType(this.return_type);
         analyseBlockStmt(return_tt.getTokenType(), 1);
         if(!this.is_returned){
-            this.function_body.add(new Instruction(Operation.ret));
+            this.addInstruction(new Instruction(Operation.ret));
         }
         func.setFunctionBody(this.function_body);
         func.setLocals(this.local_table);
@@ -226,7 +244,7 @@ public final class Analyser {
             expect(TokenType.SEMICOLON);
         } else{
             analyseExprStmt();
-            this.function_body.addAll(expr_stack.addAllReset());
+            this.addAllInstruction(expr_stack.addAllReset());
         }
     }
 
@@ -293,19 +311,19 @@ public final class Analyser {
             else{
                 num = Character.getNumericValue((Character) token.getValue());
             }
-            this.function_body.add(new Instruction(Operation.push, (long)num));
+            this.addInstruction(new Instruction(Operation.push, (long)num));
             return TokenType.INT_KW;
         }
         else if(tt == TokenType.STRING_LITERAL){
             // 新建全局变量， 变量名是该字符串，变量值也是该字符串
             int global_index = this.def_table.addGlobal(token.getValueString(),
                 TokenType.STRING_LITERAL, true, true, token.getStartPos(), token.getValueString());
-            this.function_body.add(new Instruction(Operation.push, (long)global_index));
+            this.addInstruction(new Instruction(Operation.push, (long)global_index));
             return TokenType.STRING_LITERAL;
         }
         else if(tt == TokenType.DOUBLE_LITERAL){
             String binary = Long.toBinaryString(Double.doubleToRawLongBits((Double) token.getValue()));
-            this.function_body.add(new Instruction(Operation.push, Format.StringToLong(binary)));
+            this.addInstruction(new Instruction(Operation.push, Format.StringToLong(binary)));
             return TokenType.DOUBLE_KW;
         }
         else{
@@ -319,16 +337,16 @@ public final class Analyser {
         TokenType as_tt = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW).getTokenType();
         if(tt == TokenType.INT_KW && as_tt == TokenType.DOUBLE_KW){
             // int to double
-            this.function_body.add(new Instruction(Operation.itof));
+            this.addInstruction(new Instruction(Operation.itof));
         }
         else if(tt == TokenType.DOUBLE_KW && as_tt == TokenType.INT_KW){
             // double to int
-            this.function_body.add(new Instruction(Operation.ftoi));
+            this.addInstruction(new Instruction(Operation.ftoi));
         }
         else if(tt != as_tt){
             throw new AnalyzeError(ErrorCode.AsTypeWrong, peek().getStartPos());
         }
-        this.function_body.addAll(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset());
         while(check(TokenType.AS_KW)){
             as_tt = analyseAsExpr(as_tt);
         }
@@ -338,7 +356,7 @@ public final class Analyser {
     private TokenType analyseOperatorExpr(TokenType tt) throws CompileError{
         Token token = expect(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
             TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE);
-        this.function_body.addAll(expr_stack.addTokenAndGenerateInstruction(token.getTokenType()));
+        this.addAllInstruction(expr_stack.addTokenAndGenerateInstruction(token.getTokenType()));
         TokenType next_tt = analyseExpr();
         if(tt != next_tt || (tt != TokenType.INT_KW && tt != TokenType.DOUBLE_KW)){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
@@ -354,8 +372,8 @@ public final class Analyser {
         if(!this.def_table.getSymbol(token.getValueString()).isInitialized()){
             throw new AnalyzeError(ErrorCode.NotInitialized, token.getStartPos());
         }
-        this.function_body.add(getLocalOrParamAddress(token));
-        this.function_body.add(new Instruction(Operation.load64));
+        this.addInstruction(getLocalOrParamAddress(token));
+        this.addInstruction(new Instruction(Operation.load64));
         return se.getTokenType();
     }
 
@@ -367,7 +385,7 @@ public final class Analyser {
         if (se.isConstant())
             throw new AnalyzeError(ErrorCode.AssignToConstant, peek().getStartPos());
 
-        this.function_body.add(getLocalOrParamAddress(token));
+        this.addInstruction(getLocalOrParamAddress(token));
         // 获取值的类型
         TokenType tt = analyseExpr();
         TokenType assigned = se.getTokenType();
@@ -375,9 +393,9 @@ public final class Analyser {
         if(tt != assigned || (assigned != TokenType.INT_KW && assigned != TokenType.DOUBLE_KW)){
             throw new AnalyzeError(ErrorCode.AssignTypeWrong, peek().getStartPos());
         }
-        this.function_body.addAll(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset());
         initializeSymbol(token.getValueString(), token.getStartPos());
-        this.function_body.add(new Instruction(Operation.store64));
+        this.addInstruction(new Instruction(Operation.store64));
         return TokenType.VOID_KW;
     }
 
@@ -386,18 +404,18 @@ public final class Analyser {
         Function func = this.def_table.getFunction(token.getValueString());
 
         // 分配return的slot
-        this.function_body.add(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
+        this.addInstruction(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
         expect(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN)) {
             // 准备参数，分配空间并放入参数
             analyseCallParamList(func.getParams());
         }
         if(func.isSTDFunction()){
-            this.function_body.add(new Instruction(Operation.callname, (long)func.getId()));
+            this.addInstruction(new Instruction(Operation.callname, (long)func.getId()));
         }
         else{
 
-            this.function_body.add(new Instruction(Operation.call, (long)func.getId()));
+            this.addInstruction(new Instruction(Operation.call, (long)func.getId()));
         }
         expect(TokenType.R_PAREN);
         return func.getReturnType();
@@ -407,12 +425,12 @@ public final class Analyser {
         int param_num = 1;
         analyseExpr();
         // 将栈中表达式全计算完
-        this.function_body.addAll(this.expr_stack.addAllReset());
+        this.addAllInstruction(this.expr_stack.addAllReset());
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             // todo: 返回值类型检查
             analyseExpr();
-            this.function_body.addAll(this.expr_stack.addAllReset());
+            this.addAllInstruction(this.expr_stack.addAllReset());
             param_num++;
         }
         if(param_num != param_list.size()){
@@ -423,19 +441,19 @@ public final class Analyser {
 
     private TokenType analyseGroupExpr() throws CompileError{
         expect(TokenType.L_PAREN);
-        this.function_body.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
+        this.addAllInstruction(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
         TokenType tt = analyseExpr();
         expect(TokenType.R_PAREN);
-        this.function_body.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
-        this.function_body.addAll(expr_stack.addAllReset());
+        this.addAllInstruction(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
+        this.addAllInstruction(expr_stack.addAllReset());
         return tt;
     }
 
     private TokenType analyseNegateExpr() throws CompileError{
         expect(TokenType.MINUS);
-        this.function_body.add(new Instruction(Operation.push, 0L));
+        this.addInstruction(new Instruction(Operation.push, 0L));
         TokenType tt = analyseExpr();
-        this.function_body.add(new Instruction((Operation.sub_i)));
+        this.addInstruction(new Instruction((Operation.sub_i)));
         return tt;
     }
 
@@ -448,19 +466,19 @@ public final class Analyser {
             }
             // todo: 返回值类型检查
             // 返回值off是0
-            this.function_body.add(new Instruction(Operation.arga, (long)0));
+            this.addInstruction(new Instruction(Operation.arga, (long)0));
             TokenType tt = analyseExpr();
             if(tt != this.return_type){
                 throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
             }
-            this.function_body.addAll(expr_stack.addAllReset());
-            this.function_body.add(new Instruction(Operation.store64));
+            this.addAllInstruction(expr_stack.addAllReset());
+            this.addInstruction(new Instruction(Operation.store64));
         }
         else if(this.return_type != TokenType.VOID_KW){
             throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
         }
-        this.function_body.addAll(expr_stack.addAllReset());
-        this.function_body.add(new Instruction(Operation.ret));
+        this.addAllInstruction(expr_stack.addAllReset());
+        this.addInstruction(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
         this.is_returned = true;
     }
@@ -477,19 +495,19 @@ public final class Analyser {
 
     private void analyseWhileStmt(int level) throws CompileError{
         expect(TokenType.WHILE_KW);
-        this.function_body.add(new Instruction(Operation.br, (long)0));
+        this.addInstruction(new Instruction(Operation.br, (long)0));
 
         // start，记录开始计算while条件的指令位置
         int start = this.function_body.size();
         analyseExpr();
-        this.function_body.addAll(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset());
 
         // br_true，如果是真的话跳过br指令，如果是假的话跳到br指令跳出循环
-        this.function_body.add(new Instruction(Operation.br_true, (long)1));
+        this.addInstruction(new Instruction(Operation.br_true, (long)1));
 
         //br，跳出循环体，参数待填
         Instruction br = new Instruction(Operation.br);
-        this.function_body.add(br);
+        this.addInstruction(br);
 
         // 记录while循环体开始处
         int index = this.function_body.size();
@@ -498,7 +516,7 @@ public final class Analyser {
 
         // br_start，跳到while条件判断处，参数待填
         Instruction br_start = new Instruction(Operation.br);
-        this.function_body.add(br_start);
+        this.addInstruction(br_start);
         br_start.setNum((long)(start - this.function_body.size()));
 
         br.setNum((long)(this.function_body.size() - index));
@@ -510,13 +528,13 @@ public final class Analyser {
         expect(TokenType.IF_KW);
 
         analyseExpr();
-        this.function_body.addAll(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset());
 
         //brTrue
-        this.function_body.add(new Instruction(Operation.br_true, (long)1));
+        this.addInstruction(new Instruction(Operation.br_true, (long)1));
         //br
         Instruction br = new Instruction(Operation.br, (long)0);
-        this.function_body.add(br);
+        this.addInstruction(br);
         int index = this.function_body.size();
 
         analyseBlockStmt(null, level + 1);
@@ -536,14 +554,14 @@ public final class Analyser {
                 else{
                     // else 语句
                     analyseBlockStmt(null, level + 1);
-                    this.function_body.add(new Instruction(Operation.br, (long)0));
+                    this.addInstruction(new Instruction(Operation.br, (long)0));
                 }
             }
         }
         else{
             // if执行完成后要跳转到else block之后
             Instruction jumpInstruction = new Instruction(Operation.br);
-            this.function_body.add(jumpInstruction);
+            this.addInstruction(jumpInstruction);
             int jump = this.function_body.size();
 
             int dis = jump - index;
@@ -558,7 +576,7 @@ public final class Analyser {
                 else{
                     // else 语句
                     analyseBlockStmt(null, level + 1);
-                    this.function_body.add(new Instruction(Operation.br, (long)0));
+                    this.addInstruction(new Instruction(Operation.br, (long)0));
                 }
             }
             dis = this.function_body.size() - jump;
@@ -608,19 +626,24 @@ public final class Analyser {
         expect(TokenType.ASSIGN);
         this.onAssign = true;
         if(level == 0){// 全局
-            int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), false, true, nameToken.getStartPos(), 0);
-            this.function_body.add(new Instruction(Operation.globa, (long)global_id));
+            int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), false, true, nameToken.getStartPos(), 0);
+            this.global_instructions.add(new Instruction(Operation.globa, (long)global_id));
         }
         else{
             SymbolEntry se = functionAddLocal(type.getTokenType(),nameToken.getValueString(), true, true, nameToken.getStartPos(), level);
-            this.function_body.add(new Instruction(Operation.loca, (long)se.getId()));
+            this.addInstruction(new Instruction(Operation.loca, (long)se.getId()));
         }
         TokenType tt = analyseExpr();
         if(tt != type.getTokenType()){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
         }
-        this.function_body.addAll(this.expr_stack.addAllReset());
-        this.function_body.add(new Instruction((Operation.store64)));
+        if(level == 0){
+            // 全局
+            this.global_instructions.addAll(this.expr_stack.addAllReset());
+            this.global_instructions.add(new Instruction((Operation.store64)));
+        }
+        this.addAllInstruction(this.expr_stack.addAllReset());
+        this.addInstruction(new Instruction((Operation.store64)));
         this.onAssign = false;
         expect(TokenType.SEMICOLON);
     }
@@ -636,27 +659,34 @@ public final class Analyser {
             this.onAssign = true;
             if(level == 0){
                 // 全局变量
-                int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
-                this.function_body.add(new Instruction(Operation.globa, (long)global_id));
+                int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                this.global_instructions.add(new Instruction(Operation.globa, (long)global_id));
             }
             else{
                 // 局部变量
                 SymbolEntry se = functionAddLocal(type.getTokenType(),nameToken.getValueString(), true, false, nameToken.getStartPos(), level);
-                this.function_body.add(new Instruction(Operation.loca, (long)se.getId()));
+                this.addInstruction(new Instruction(Operation.loca, (long)se.getId()));
             }
             TokenType tt = analyseExpr();
             if(tt != type.getTokenType()){
                 System.out.println(tt + "  " + type.getTokenType());
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
-            this.function_body.addAll(this.expr_stack.addAllReset());
-            this.function_body.add(new Instruction((Operation.store64)));
+            if(level == 0){
+                // 全局
+                this.global_instructions.addAll(this.expr_stack.addAllReset());
+                this.global_instructions.add(new Instruction((Operation.store64)));
+            }
+            else {
+                this.addAllInstruction(this.expr_stack.addAllReset());
+                this.addInstruction(new Instruction((Operation.store64)));
+            }
             this.onAssign = false;
         }
         else{
             if(level == 0){
                 // 全局变量
-                this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), 0);
             }
             else{
                 // 局部变量
