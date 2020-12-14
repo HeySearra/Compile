@@ -700,7 +700,7 @@ public final class Analyser {
             this.onAssign = true;
             if(level == 0){
                 // 全局变量
-                int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), null);
                 this.global_instructions.add(new Instruction(Operation.globa, (long)global_id));
             }
             else{
@@ -727,7 +727,7 @@ public final class Analyser {
         else{
             if(level == 0){
                 // 全局变量
-                this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), 0);
+                this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, false, nameToken.getStartPos(), null);
             }
             else{
                 // 局部变量
