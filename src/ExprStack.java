@@ -147,7 +147,8 @@ public class ExprStack {
         break;
       top = operation_stack.peek();
     }
-    operation_stack.push(tt);
+    if(tt != TokenType.R_PAREN)
+      operation_stack.push(tt);
     return instructions;
   }
 

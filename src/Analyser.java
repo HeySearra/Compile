@@ -402,11 +402,14 @@ public final class Analyser {
         // 分配return的slot
         this.addInstruction(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
         expect(TokenType.L_PAREN);
-//        this.expr_stack.operation_stack.push(TokenType.L_PAREN);
+        this.expr_stack.operation_stack.push(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN)) {
             // 准备参数，分配空间并放入参数
             analyseCallParamList(func.getParams());
         }
+        expect(TokenType.R_PAREN);
+        System.out.println("top  " + this.expr_stack.operation_stack.pop());
+
         if(func.isSTDFunction()){
             this.addInstruction(new Instruction(Operation.callname, (long)func.getId()));
         }
@@ -414,7 +417,6 @@ public final class Analyser {
 
             this.addInstruction(new Instruction(Operation.call, (long)this.def_table.getFunctionIndex(func)));
         }
-        expect(TokenType.R_PAREN);
         return func.getReturnType();
     }
 
@@ -424,15 +426,18 @@ public final class Analyser {
         if(param_list.get(i++).getTokenType() != type){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
         }
-        // 将栈中表达式全计算完
-        this.addAllInstruction(this.expr_stack.addAllReset(type));
+        while (!this.expr_stack.operation_stack.empty() && this.expr_stack.operation_stack.peek() != TokenType.L_PAREN) {
+            this.addAllInstruction(this.expr_stack.generateInstruction(this.expr_stack.operation_stack.pop(), type));
+        }
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             type = analyseExpr();
             if(param_list.get(i++).getTokenType() != type){
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
-            this.addAllInstruction(this.expr_stack.addAllReset(type));
+            while (!this.expr_stack.operation_stack.empty() && this.expr_stack.operation_stack.peek() != TokenType.L_PAREN) {
+                this.addAllInstruction(this.expr_stack.generateInstruction(this.expr_stack.operation_stack.pop(), type));
+            }
             param_num++;
         }
         if(param_num != param_list.size()){
