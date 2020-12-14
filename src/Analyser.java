@@ -402,7 +402,7 @@ public final class Analyser {
         // 分配return的slot
         this.addInstruction(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
         expect(TokenType.L_PAREN);
-        this.expr_stack.operation_stack.push(TokenType.L_PAREN);
+//        this.expr_stack.operation_stack.push(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN)) {
             // 准备参数，分配空间并放入参数
             analyseCallParamList(func.getParams());
