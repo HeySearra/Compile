@@ -221,7 +221,6 @@ public final class Analyser {
         } else if(check(TokenType.RETURN_KW)){
             analyseReturnStmt();
         } else if(check(TokenType.L_BRACE)){
-            this.def_table.level = level + 1;
             analyseBlockStmt(return_type, level + 1);
         } else if(check(TokenType.SEMICOLON)){
             expect(TokenType.SEMICOLON);

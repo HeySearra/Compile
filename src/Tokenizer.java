@@ -82,6 +82,18 @@ public class Tokenizer {
                 uint.append(it.nextChar());
                 peek = it.peekChar();
             }
+            if(peek == 'e' || peek == 'E'){
+                uint.append(it.nextChar());
+                peek = it.peekChar();
+                if(peek == '+' || peek == '-'){
+                    uint.append(it.nextChar());
+                    peek = it.peekChar();
+                }
+                while(!it.isEOF() && Character.isDigit(peek)){
+                    uint.append(it.nextChar());
+                    peek = it.peekChar();
+                }
+            }
             double num;
             try{
                 num = Double.parseDouble(uint.toString());
