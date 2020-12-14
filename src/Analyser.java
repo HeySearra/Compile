@@ -667,7 +667,7 @@ public final class Analyser {
         expect(TokenType.ASSIGN);
         this.onAssign = true;
         if(level == 0){// 全局
-            int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), false, true, nameToken.getStartPos(), 0);
+            int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), false, true, nameToken.getStartPos(), null);
             this.global_instructions.add(new Instruction(Operation.globa, (long)global_id));
         }
         else{
