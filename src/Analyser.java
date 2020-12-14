@@ -438,7 +438,10 @@ public final class Analyser {
             // todo: 返回值类型检查
             // 返回值off是0
             this.function_body.add(new Instruction(Operation.arga, (long)0));
-            analyseExpr();
+            TokenType tt = analyseExpr();
+            if(tt != this.return_type){
+                throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
+            }
             this.function_body.addAll(expr_stack.addAllReset());
             this.function_body.add(new Instruction(Operation.store64));
         }
