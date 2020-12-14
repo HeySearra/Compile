@@ -106,10 +106,15 @@ public class Tokenizer {
             int num;
             try{
                 num = Integer.parseInt(uint.toString());
+                token = new Token(TokenType.UINT_LITERAL, num, startPos, it.currentPos());
             }catch(Exception e){
-                throw new TokenizeError(ErrorCode.InvalidInt, it.currentPos());
+                try{
+                    double double_num = Double.parseDouble(uint.toString());
+                    token = new Token(TokenType.DOUBLE_LITERAL, double_num, startPos, it.currentPos());
+                }catch(Exception e) {
+                    throw new TokenizeError(ErrorCode.InvalidDouble, it.currentPos());
+                }
             }
-            token = new Token(TokenType.UINT_LITERAL, num, startPos, it.currentPos());
         }
         return token;
     }
