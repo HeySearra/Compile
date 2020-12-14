@@ -20,4 +20,15 @@ public class Format {
     Collections.addAll(t, tokenTypes);
     return t;
   }
+
+  public static long StringToLong(String a){
+    long aws = 0;
+    long xi = 1;
+    for(int i=a.length()-1; i>=0; i--){
+      if(a.charAt(i) == '1')
+        aws += xi;
+      xi *=2;
+    }
+    return aws;
+  }
 }

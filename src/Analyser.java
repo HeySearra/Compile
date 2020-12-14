@@ -285,21 +285,27 @@ public final class Analyser {
     private TokenType analyseLiteralExpr() throws CompileError{
         Token token = expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
         TokenType tt = token.getTokenType();
-        if(tt == TokenType.UINT_LITERAL){
+        if(tt == TokenType.UINT_LITERAL || tt == TokenType.CHAR_LITERAL){
             // 直接push进栈
             int num = (int) token.getValue();
             this.function_body.add(new Instruction(Operation.push, (long)num));
+            return TokenType.INT_KW;
         }
         else if(tt == TokenType.STRING_LITERAL){
             // 新建全局变量， 变量名是该字符串，变量值也是该字符串
             int global_index = this.def_table.addGlobal(token.getValueString(),
                 TokenType.STRING_LITERAL, true, true, token.getStartPos(), token.getValueString());
             this.function_body.add(new Instruction(Operation.push, (long)global_index));
+            return TokenType.STRING_LITERAL;
+        }
+        else if(tt == TokenType.DOUBLE_LITERAL){
+            String binary = Long.toBinaryString(Double.doubleToRawLongBits((Double) token.getValue()));
+            this.function_body.add(new Instruction(Operation.push, Format.StringToLong(binary)));
+            return TokenType.DOUBLE_KW;
         }
         else{
             throw new AnalyzeError(ErrorCode.ExpectedToken, token.getStartPos());
         }
-        return tt;
     }
 
     // todo: 类型转换没写完
@@ -635,6 +641,7 @@ public final class Analyser {
             }
             TokenType tt = analyseExpr();
             if(tt != type.getTokenType()){
+                System.out.println(tt + "  " + type.getTokenType());
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
             this.function_body.addAll(this.expr_stack.addAllReset());
