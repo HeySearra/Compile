@@ -56,9 +56,7 @@ public class OutToBinary {
       }
 
       output.addAll(global_value_count);
-      System.out.println("global value count: " + global_value.size());
       output.addAll(global_value);
-      System.out.println("global value: " + g.getValue().toString());
     }
 
     //functions.count
