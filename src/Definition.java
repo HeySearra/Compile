@@ -139,8 +139,6 @@ public class Definition {
         throw new AnalyzeError(ErrorCode.NoSuchGlobal, new Pos(-1, -1));
     }
 
-
-
     public Function addFunction(String name, TokenType return_tt, Pos pos) throws AnalyzeError {
         System.out.println("add function: " + name + "\t\t index: " + this.global_list.size());
         if(this.function_list.get(name) != null || getSymbol(name, level) != null){

@@ -49,7 +49,11 @@ public class SymbolEntry {
         this.type = type;
     }
 
+    public void setTokenType(TokenType tt) { this.tt = tt; }
+
     public SymbolType getType() { return this.type; }
+
+    public TokenType getTokenType() { return this.tt; }
 
     public Boolean isConstant() {
         return this.is_const;
