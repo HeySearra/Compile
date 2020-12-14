@@ -89,7 +89,7 @@ public class Definition {
                 func.setReturnType(TokenType.VOID_KW);
                 func.setParamSlot(1);
                 func.setParams(new ArrayList<>(Collections.singletonList(
-                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.INT_KW, false, false,
+                    new SymbolEntry(-1, SymbolType.Param, null, TokenType.STRING_LITERAL, false, false,
                         null, -1))));
                 return func;
             case "putln":
