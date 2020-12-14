@@ -173,7 +173,7 @@ public class Definition {
             for(Integer a :this.symbol_list.keySet()){
                 SymbolEntry sym = this.symbol_list.get(a);
 //                System.out.println("check name: " +sym.getName());
-                if(sym.level <= i && sym.getName().equals(name)){
+                if(sym.level == i && sym.getName().equals(name)){
                     return sym;
                 }
             }
