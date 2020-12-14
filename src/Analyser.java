@@ -287,7 +287,13 @@ public final class Analyser {
         TokenType tt = token.getTokenType();
         if(tt == TokenType.UINT_LITERAL || tt == TokenType.CHAR_LITERAL){
             // 直接push进栈
-            int num = (int) token.getValue();
+            int num;
+            if(token.getTokenType() == TokenType.UINT_LITERAL){
+                num = (int) token.getValue();
+            }
+            else{
+                num = Character.getNumericValue((Character) token.getValue());
+            }
             this.function_body.add(new Instruction(Operation.push, (long)num));
             return TokenType.INT_KW;
         }
@@ -530,7 +536,7 @@ public final class Analyser {
                 }
                 else{
                     // else 语句
-                    analyseBlockStmt(null, level);
+                    analyseBlockStmt(null, level + 1);
                     this.function_body.add(new Instruction(Operation.br, (long)0));
                 }
             }
@@ -552,7 +558,7 @@ public final class Analyser {
                 }
                 else{
                     // else 语句
-                    analyseBlockStmt(null, level);
+                    analyseBlockStmt(null, level + 1);
                     this.function_body.add(new Instruction(Operation.br, (long)0));
                 }
             }
