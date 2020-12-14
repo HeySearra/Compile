@@ -2,7 +2,7 @@ import java.util.*;
 public final class Analyser {
 
     Tokenizer tokenizer;
-    ArrayList<Instruction> global_instructions;
+    List<Instruction> global_instructions;
     int global_slot;
 
     /** 当前偷看的 token */
@@ -149,7 +149,7 @@ public final class Analyser {
             if(check(TokenType.FN_KW)){
                 analyseFunction();
             }else if(check(TokenType.LET_KW)||check(TokenType.CONST_KW)){
-                this.global_instructions.addAll(analyseDeclStmt(0));
+                analyseDeclStmt(0);
             }else{
                 throw new ExpectedTokenError(
                     Format.generateList(TokenType.LET_KW, TokenType.CONST_KW, TokenType.FN_KW), peek());
@@ -185,7 +185,7 @@ public final class Analyser {
         Token return_tt = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
         this.return_type = return_tt.getTokenType();
         func.setReturnType(this.return_type);
-        this.function_body = analyseBlockStmt(return_tt.getTokenType(), 1);
+        analyseBlockStmt(return_tt.getTokenType(), 1);
         if(!this.is_returned){
             this.function_body.add(new Instruction(Operation.ret));
         }
@@ -195,81 +195,72 @@ public final class Analyser {
     }
 
     // return_type
-    private List<Instruction> analyseBlockStmt(TokenType return_type, int level) throws CompileError{
+    private void analyseBlockStmt(TokenType return_type, int level) throws CompileError{
         this.def_table.level = level;
         expect(TokenType.L_BRACE);
-        List<Instruction> res_ins = new ArrayList<>();
         while(!check(TokenType.R_BRACE)){
-            List<Instruction> res = analyseStmt(return_type, level);
-            if(res != null){
-                res_ins.addAll(res);
-            }
+            analyseStmt(return_type, level);
         }
         expect(TokenType.R_BRACE);
         // 只能清符号表，不能清函数local表
         this.def_table.levelDown();
-        return res_ins;
     }
 
-    private List<Instruction> analyseStmt(TokenType return_type, int level) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseStmt(TokenType return_type, int level) throws CompileError{
         if(check(TokenType.LET_KW) || check((TokenType.CONST_KW))){
-            res_ins.addAll(analyseDeclStmt(level));
+            analyseDeclStmt(level);
         } else if(check(TokenType.IF_KW)){
-            res_ins.addAll(analyseIfStmt(level));
+            analyseIfStmt(level);
         } else if(check(TokenType.WHILE_KW)){
-            res_ins.addAll(analyseWhileStmt(level));
+            analyseWhileStmt(level);
         } else if(check(TokenType.BREAK_KW)){
-            res_ins.addAll(analyseBreakStmt());
+            analyseBreakStmt();
         } else if(check(TokenType.CONTINUE_KW)){
-            res_ins.addAll(analyseContinueStmt());
+            analyseContinueStmt();
         } else if(check(TokenType.RETURN_KW)){
-            res_ins.addAll(analyseReturnStmt());
+            analyseReturnStmt();
         } else if(check(TokenType.L_BRACE)){
             this.def_table.level = level + 1;
-            res_ins.addAll(analyseBlockStmt(return_type, level + 1));
+            analyseBlockStmt(return_type, level + 1);
         } else if(check(TokenType.SEMICOLON)){
             expect(TokenType.SEMICOLON);
         } else{
-            res_ins.addAll(analyseExprStmt());
-            res_ins.addAll(expr_stack.addAllReset());
+            analyseExprStmt();
+            this.function_body.addAll(expr_stack.addAllReset());
         }
-        return res_ins;
     }
 
-    private List<Instruction> analyseExprStmt() throws CompileError{
-        List<Instruction> res_ins = analyseExpr();
+    private void analyseExprStmt() throws CompileError{
+        analyseExpr();
         expect(TokenType.SEMICOLON);
-        return res_ins;
     }
 
-    private List<Instruction> analyseExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseExpr() throws CompileError{
         if(check(TokenType.MINUS)){
-            res_ins.addAll(analyseNegateExpr());
+            analyseNegateExpr();
         }
         else if(check(TokenType.L_PAREN)){
-            res_ins.addAll(analyseGroupExpr());
+            analyseGroupExpr();
         }
         else if(check(TokenType.IDENT)){
             Token nameToken = expect(TokenType.IDENT);
 
             if(check(TokenType.L_PAREN)) {
-                res_ins.addAll(analyseCallExpr(nameToken));
+                analyseCallExpr(nameToken);
             }
             else if(check(TokenType.ASSIGN)) {
                 SymbolEntry se = this.def_table.getSymbol(nameToken.getValueString());
                 if(se == null){
                   throw new AnalyzeError(ErrorCode.NotDeclared, peek().getStartPos());
                 }
-                res_ins.addAll(analyseAssignExpr(se, nameToken));
+                analyseAssignExpr(se, nameToken);
             }
             else{
-                res_ins.addAll(analyseIdentExpr(nameToken));
+                analyseIdentExpr(nameToken);
             }
         }
         else if(check(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL)){
-            res_ins.addAll(analyseLiteralExpr());
+            analyseLiteralExpr();
         }
         else {
             throw new ExpectedTokenError(Format.generateList(TokenType.MINUS, TokenType.L_PAREN, TokenType.IDENT, TokenType.L_PAREN, TokenType.ASSIGN),
@@ -280,71 +271,61 @@ public final class Analyser {
             TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE, TokenType.AS_KW)){
             if(check(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
                 TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE)) {
-                res_ins.addAll(analyseOperatorExpr());
+                analyseOperatorExpr();
             }
             else if(check(TokenType.AS_KW)){
-                res_ins.addAll(analyseAsExpr());
+                analyseAsExpr();
             }
         }
-        return res_ins;
     }
 
-    private List<Instruction> analyseLiteralExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseLiteralExpr() throws CompileError{
         Token token = expect(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL);
         if(token.getTokenType() == TokenType.UINT_LITERAL){
             // 直接push进栈
             int num = (int) token.getValue();
-            res_ins.add(new Instruction(Operation.push, (long)num));
+            this.function_body.add(new Instruction(Operation.push, (long)num));
         }
         else if(token.getTokenType() == TokenType.STRING_LITERAL){
             // 新建全局变量， 变量名是该字符串，变量值也是该字符串
             int global_index = this.def_table.addGlobal(token.getValueString(),
                 TokenType.STRING_LITERAL, true, true, token.getStartPos(), token.getValueString());
-            res_ins.add(new Instruction(Operation.push, (long)global_index));
+            this.function_body.add(new Instruction(Operation.push, (long)global_index));
         }
         else{
             throw new AnalyzeError(ErrorCode.ExpectedToken, token.getStartPos());
         }
-        return res_ins;
     }
 
     // todo: 类型转换没写完
-    private List<Instruction> analyseAsExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseAsExpr() throws CompileError{
         expect(TokenType.AS_KW);
         Token ty = expect(TokenType.VOID_KW, TokenType.INT_KW, TokenType.DOUBLE_KW);
-        res_ins.addAll(expr_stack.addAllReset());
+        this.function_body.addAll(expr_stack.addAllReset());
         while(check(TokenType.AS_KW)){
-            res_ins.addAll(analyseAsExpr());
+            analyseAsExpr();
         }
-        return res_ins;
     }
 
-    private List<Instruction> analyseOperatorExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseOperatorExpr() throws CompileError{
         Token token = expect(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
             TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE);
-        res_ins.addAll(expr_stack.addTokenAndGenerateInstruction(token.getTokenType()));
-        res_ins.addAll(analyseExpr());
-        return res_ins;
+        this.function_body.addAll(expr_stack.addTokenAndGenerateInstruction(token.getTokenType()));
+        analyseExpr();
     }
 
-    private List<Instruction> analyseIdentExpr(Token token) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseIdentExpr(Token token) throws CompileError{
         if(this.def_table.getSymbol(token.getValueString()) == null){
             throw new AnalyzeError(ErrorCode.NotDeclared, token.getStartPos());
         }
         if(!this.def_table.getSymbol(token.getValueString()).isInitialized()){
             throw new AnalyzeError(ErrorCode.NotInitialized, token.getStartPos());
         }
-        res_ins.add(getLocalOrParamAddress(token));
-        res_ins.add(new Instruction(Operation.load64));
-        return res_ins;
+        this.function_body.add(getLocalOrParamAddress(token));
+        this.function_body.add(new Instruction(Operation.load64));
     }
 
-    private List<Instruction> analyseAssignExpr(SymbolEntry se, Token token) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseAssignExpr(SymbolEntry se, Token token) throws CompileError{
         expect(TokenType.ASSIGN);
         if(this.onAssign){
             throw new AnalyzeError(ErrorCode.AssignFaild, peek().getStartPos());
@@ -352,77 +333,68 @@ public final class Analyser {
         if (se.isConstant())
             throw new AnalyzeError(ErrorCode.AssignToConstant, peek().getStartPos());
 
-        res_ins.add(getLocalOrParamAddress(token));
-        res_ins.addAll(analyseExpr());
-        res_ins.addAll(expr_stack.addAllReset());
+        this.function_body.add(getLocalOrParamAddress(token));
+        analyseExpr();
+        this.function_body.addAll(expr_stack.addAllReset());
         initializeSymbol(token.getValueString(), token.getStartPos());
-        res_ins.add(new Instruction(Operation.store64));
-        return res_ins;
+        this.function_body.add(new Instruction(Operation.store64));
     }
 
-    private List<Instruction> analyseCallExpr(Token token) throws CompileError{
+    private void analyseCallExpr(Token token) throws CompileError{
         Function func = this.def_table.getFunction(token.getValueString());
-        List<Instruction> res_ins = new ArrayList<>();
 
         // 分配return的slot
-        res_ins.add(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
+        this.function_body.add(new Instruction(Operation.stackalloc, (long)func.getReturnSlot()));
         expect(TokenType.L_PAREN);
         if(!check(TokenType.R_PAREN)) {
             // 准备参数，分配空间并放入参数
-            res_ins.addAll(analyseCallParamList(func.getParams()));
+            analyseCallParamList(func.getParams());
         }
         if(func.isSTDFunction()){
-            res_ins.add(new Instruction(Operation.callname, (long)func.getId()));
+            this.function_body.add(new Instruction(Operation.callname, (long)func.getId()));
         }
         else{
 
-            res_ins.add(new Instruction(Operation.call, (long)func.getId()));
+            this.function_body.add(new Instruction(Operation.call, (long)func.getId()));
         }
         expect(TokenType.R_PAREN);
-        return res_ins;
     }
 
-    private List<Instruction> analyseCallParamList(List<SymbolEntry> param_list) throws CompileError{
+    private void analyseCallParamList(List<SymbolEntry> param_list) throws CompileError{
         int param_num = 1;
-        List<Instruction> res_ins = new ArrayList<>(analyseExpr());
+        analyseExpr();
         // 将栈中表达式全计算完
-        res_ins.addAll(this.expr_stack.addAllReset());
+        this.function_body.addAll(this.expr_stack.addAllReset());
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             // todo: 返回值类型检查
-            res_ins.addAll(analyseExpr());
-            res_ins.addAll(this.expr_stack.addAllReset());
+            analyseExpr();
+            this.function_body.addAll(this.expr_stack.addAllReset());
             param_num++;
         }
         if(param_num != param_list.size()){
             System.out.println("当前参数个数：" + param_num + " ，期望参数个数：" + param_list.size());
             throw new AnalyzeError(ErrorCode.ParamNumWrong, this.peekedToken.getStartPos());
         }
-        return res_ins;
     }
 
-    private List<Instruction> analyseGroupExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseGroupExpr() throws CompileError{
         expect(TokenType.L_PAREN);
-        res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
-        res_ins.addAll(analyseExpr());
+        this.function_body.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
+        analyseExpr();
         expect(TokenType.R_PAREN);
-        res_ins.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
-        res_ins.addAll(expr_stack.addAllReset());
-        return res_ins;
+        this.function_body.addAll(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
+        this.function_body.addAll(expr_stack.addAllReset());
     }
 
-    private List<Instruction> analyseNegateExpr() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseNegateExpr() throws CompileError{
         expect(TokenType.MINUS);
-        res_ins.add(new Instruction(Operation.push, 0L));
-        res_ins.addAll(analyseExpr());
-        res_ins.add(new Instruction((Operation.sub_i)));
-        return res_ins;
+        this.function_body.add(new Instruction(Operation.push, 0L));
+        analyseExpr();
+        this.function_body.add(new Instruction((Operation.sub_i)));
     }
 
-    private List<Instruction> analyseReturnStmt() throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseReturnStmt() throws CompileError{
         expect(TokenType.RETURN_KW);
         if(!check(TokenType.SEMICOLON)){
             // 有返回值
@@ -431,84 +403,79 @@ public final class Analyser {
             }
             // todo: 返回值类型检查
             // 返回值off是0
-            res_ins.add(new Instruction(Operation.arga, (long)0));
-            res_ins.addAll(analyseExpr());
-            res_ins.addAll(expr_stack.addAllReset());
-            res_ins.add(new Instruction(Operation.store64));
+            this.function_body.add(new Instruction(Operation.arga, (long)0));
+            analyseExpr();
+            this.function_body.addAll(expr_stack.addAllReset());
+            this.function_body.add(new Instruction(Operation.store64));
         }
         else if(this.return_type != TokenType.VOID_KW){
             throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
         }
-        res_ins.addAll(expr_stack.addAllReset());
-        res_ins.add(new Instruction(Operation.ret));
+        this.function_body.addAll(expr_stack.addAllReset());
+        this.function_body.add(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
         this.is_returned = true;
-        return res_ins;
     }
 
-    private List<Instruction> analyseContinueStmt() throws CompileError{
+    private void analyseContinueStmt() throws CompileError{
         expect(TokenType.CONTINUE_KW);
         expect(TokenType.SEMICOLON);
-        return null;
     }
 
-    private List<Instruction> analyseBreakStmt() throws CompileError{
+    private void analyseBreakStmt() throws CompileError{
         expect(TokenType.BREAK_KW);
         expect(TokenType.SEMICOLON);
-        return null;
     }
 
-    private List<Instruction> analyseWhileStmt(int level) throws CompileError{
+    private void analyseWhileStmt(int level) throws CompileError{
         expect(TokenType.WHILE_KW);
-        List<Instruction> res_ins = new ArrayList<>();
-        res_ins.add(new Instruction(Operation.br, (long)0));
+        this.function_body.add(new Instruction(Operation.br, (long)0));
 
         // start，记录开始计算while条件的指令位置
-        int start = res_ins.size();
-        res_ins.addAll(analyseExpr());
-        res_ins.addAll(expr_stack.addAllReset());
+        int start = this.function_body.size();
+        analyseExpr();
+        this.function_body.addAll(expr_stack.addAllReset());
 
         // br_true，如果是真的话跳过br指令，如果是假的话跳到br指令跳出循环
-        res_ins.add(new Instruction(Operation.br_true, (long)1));
+        this.function_body.add(new Instruction(Operation.br_true, (long)1));
 
         //br，跳出循环体，参数待填
         Instruction br = new Instruction(Operation.br);
-        res_ins.add(br);
+        this.function_body.add(br);
 
         // 记录while循环体开始处
-        int index = res_ins.size();
+        int index = this.function_body.size();
 
-        res_ins.addAll(analyseBlockStmt(null, level + 1));
+        analyseBlockStmt(null, level + 1);
 
         // br_start，跳到while条件判断处，参数待填
         Instruction br_start = new Instruction(Operation.br);
-        res_ins.add(br_start);
-        br_start.setNum((long)(start - res_ins.size()));
+        this.function_body.add(br_start);
+        br_start.setNum((long)(start - this.function_body.size()));
 
-        br.setNum((long)(res_ins.size() - index));
-        return res_ins;
+        br.setNum((long)(this.function_body.size() - index));
 //        booleanTree.setTrueInstructions(analyseBlockStmt(null, level + 1));
 //        return whileTree.generate();
     }
 
-    private List<Instruction> analyseIfStmt(int level) throws CompileError{
+    private void analyseIfStmt(int level) throws CompileError{
         expect(TokenType.IF_KW);
 
-        List<Instruction> res_ins = new ArrayList<>(analyseExpr());
-        res_ins.addAll(expr_stack.addAllReset());
+        analyseExpr();
+        this.function_body.addAll(expr_stack.addAllReset());
 
         //brTrue
-        res_ins.add(new Instruction(Operation.br_true, (long)1));
+        this.function_body.add(new Instruction(Operation.br_true, (long)1));
         //br
         Instruction br = new Instruction(Operation.br, (long)0);
-        res_ins.add(br);
-        int index = res_ins.size();
+        this.function_body.add(br);
+        int index = this.function_body.size();
 
-        res_ins.addAll(analyseBlockStmt(null, level + 1));
+        analyseBlockStmt(null, level + 1);
 
-        int size = res_ins.size();
+        int size = this.function_body.size();
 
-        if(res_ins.get(size - 1).getOpt() == Operation.ret){
+        if(this.function_body.get(size - 1).getOpt() == Operation.ret){
             // 如果if block分析完成后最后一个语句是ret
             int dis = size - index;
             br.setNum((long)dis);
@@ -516,20 +483,20 @@ public final class Analyser {
                 expect(TokenType.ELSE_KW);
                 if(check(TokenType.IF_KW)){
                     // else if，递归调用if分析
-                    res_ins.addAll(analyseIfStmt(level));
+                    analyseIfStmt(level);
                 }
                 else{
                     // else 语句
-                    res_ins.addAll(analyseBlockStmt(null, level));
-                    res_ins.add(new Instruction(Operation.br, (long)0));
+                    analyseBlockStmt(null, level);
+                    this.function_body.add(new Instruction(Operation.br, (long)0));
                 }
             }
         }
         else{
             // if执行完成后要跳转到else block之后
             Instruction jumpInstruction = new Instruction(Operation.br);
-            res_ins.add(jumpInstruction);
-            int jump = res_ins.size();
+            this.function_body.add(jumpInstruction);
+            int jump = this.function_body.size();
 
             int dis = jump - index;
             br.setNum((long)dis);
@@ -538,18 +505,17 @@ public final class Analyser {
                 expect(TokenType.ELSE_KW);
                 if(check(TokenType.IF_KW)){
                     // else if，递归调用if分析
-                    res_ins.addAll(analyseIfStmt(level));
+                    analyseIfStmt(level);
                 }
                 else{
                     // else 语句
-                    res_ins.addAll(analyseBlockStmt(null, level));
-                    res_ins.add(new Instruction(Operation.br, (long)0));
+                    analyseBlockStmt(null, level);
+                    this.function_body.add(new Instruction(Operation.br, (long)0));
                 }
             }
-            dis = res_ins.size() - jump;
+            dis = this.function_body.size() - jump;
             jumpInstruction.setNum((long)dis);
         }
-        return res_ins;
     }
 
     private void analyseFunctionParamList() throws CompileError{
@@ -574,19 +540,16 @@ public final class Analyser {
     }
 
     // level == 0是全局
-    private List<Instruction> analyseDeclStmt(int level) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseDeclStmt(int level) throws CompileError{
         if(check(TokenType.LET_KW)){
-            res_ins.addAll(analyseLetDeclStmt(level));
+            analyseLetDeclStmt(level);
         } else if (check(TokenType.CONST_KW)){
-            res_ins.addAll(analyseConstDeclStmt(level));
+            analyseConstDeclStmt(level);
         }
-        return res_ins;
     }
 
     // level == 0是全局
-    private List<Instruction> analyseConstDeclStmt(int level) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseConstDeclStmt(int level) throws CompileError{
         expect(TokenType.CONST_KW);
         Token nameToken = expect(TokenType.IDENT);
         if(this.def_table.getSymbol(nameToken.getValueString()) != null){
@@ -598,22 +561,20 @@ public final class Analyser {
         this.onAssign = true;
         if(level == 0){// 全局
             int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), false, true, nameToken.getStartPos(), 0);
-            res_ins.add(new Instruction(Operation.globa, (long)global_id));
+            this.function_body.add(new Instruction(Operation.globa, (long)global_id));
         }
         else{
             SymbolEntry se = functionAddLocal(type.getTokenType(),nameToken.getValueString(), true, true, nameToken.getStartPos(), level);
-            res_ins.add(new Instruction(Operation.loca, (long)se.getId()));
+            this.function_body.add(new Instruction(Operation.loca, (long)se.getId()));
         }
-        res_ins.addAll(analyseExpr());
-        res_ins.addAll(this.expr_stack.addAllReset());
-        res_ins.add(new Instruction((Operation.store64)));
+        analyseExpr();
+        this.function_body.addAll(this.expr_stack.addAllReset());
+        this.function_body.add(new Instruction((Operation.store64)));
         this.onAssign = false;
         expect(TokenType.SEMICOLON);
-        return res_ins;
     }
 
-    private List<Instruction> analyseLetDeclStmt(int level) throws CompileError{
-        List<Instruction> res_ins = new ArrayList<>();
+    private void analyseLetDeclStmt(int level) throws CompileError{
         expect(TokenType.LET_KW);
         Token nameToken = expect(TokenType.IDENT);
         expect(TokenType.COLON);
@@ -625,16 +586,16 @@ public final class Analyser {
             if(level == 0){
                 // 全局变量
                 int global_id = this.def_table.addGlobal(nameToken.getValueString(), nameToken.getTokenType(), true, false, nameToken.getStartPos(), 0);
-                res_ins.add(new Instruction(Operation.globa, (long)global_id));
+                this.function_body.add(new Instruction(Operation.globa, (long)global_id));
             }
             else{
                 // 局部变量
                 SymbolEntry se = functionAddLocal(type.getTokenType(),nameToken.getValueString(), true, false, nameToken.getStartPos(), level);
-                res_ins.add(new Instruction(Operation.loca, (long)se.getId()));
+                this.function_body.add(new Instruction(Operation.loca, (long)se.getId()));
             }
-            res_ins.addAll(analyseExpr());
-            res_ins.addAll(this.expr_stack.addAllReset());
-            res_ins.add(new Instruction((Operation.store64)));
+            analyseExpr();
+            this.function_body.addAll(this.expr_stack.addAllReset());
+            this.function_body.add(new Instruction((Operation.store64)));
             this.onAssign = false;
         }
         else{
@@ -648,7 +609,5 @@ public final class Analyser {
             }
         }
         expect(TokenType.SEMICOLON);
-        return res_ins;
     }
-
 }
