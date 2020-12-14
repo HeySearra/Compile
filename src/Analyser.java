@@ -206,7 +206,7 @@ public final class Analyser {
         func.setReturnType(this.return_type);
         analyseBlockStmt(return_tt.getTokenType(), 1);
         if(!this.is_returned){
-            this.addInstruction(new Instruction(Operation.ret));
+            this.function_body.add(new Instruction(Operation.ret));
         }
         func.setFunctionBody(this.function_body);
         func.setLocals(this.local_table);
