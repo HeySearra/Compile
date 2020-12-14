@@ -709,6 +709,7 @@ public final class Analyser {
                 System.out.println(tt + "  " + type.getTokenType());
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
+            this.addAllInstruction(this.expr_stack.addAllReset(tt));
             this.addInstruction(new Instruction((Operation.store64)));
             this.onAssign = false;
         }
