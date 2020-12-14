@@ -7,5 +7,5 @@ public enum ErrorCode {
     InvalidPrint, ExpectedToken, InvalidDouble, InvalidInt, InvalidChar,
     NoSuchGlobal, ReturnTypeWrong, ParamNumWrong, FunctionHasNoAddr, AssignToFunction,
     CantFindMain, NotSTDFunction, AssignFaild, InvalidString, AssignTypeWrong, AsTypeWrong,
-    ExprTypeWrong,
+    ExprTypeWrong, OutWhile,
 }

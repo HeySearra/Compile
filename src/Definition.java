@@ -234,4 +234,23 @@ public class Definition {
     public int getLevel() { return this.level; }
 
     public void setLevel(int level) { this.level = level;}
+
+    public int getFunctionIndex(Function func) {
+        List<Function> func_list = new ArrayList<>();
+        for (String name: getFunctionList().keySet()) {
+            if(!this.isSTDFunction(name)){
+                func_list.add(getFunctionList().get(name));
+            }
+        }
+
+        Collections.sort(func_list);
+        int i = 0;
+        for(Function f: func_list){
+            if(f.equals(func)){
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
 }

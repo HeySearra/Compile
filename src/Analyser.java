@@ -1,4 +1,3 @@
-import java.security.spec.ECField;
 import java.util.*;
 public final class Analyser {
 
@@ -26,6 +25,10 @@ public final class Analyser {
     TokenType return_type;
     private boolean onAssign;
     boolean is_returned;
+    private int while_level;
+    //continue和break指令的集合
+    List<BreakAndContinue> continue_instruction = new ArrayList<BreakAndContinue>();
+    List<BreakAndContinue> break_instruction = new ArrayList<>();
 
     public Analyser(Tokenizer tokenizer) {
         this.tokenizer = tokenizer;
@@ -415,7 +418,7 @@ public final class Analyser {
         }
         else{
 
-            this.addInstruction(new Instruction(Operation.call, (long)func.getId()));
+            this.addInstruction(new Instruction(Operation.call, (long)this.def_table.getFunctionIndex(func)));
         }
         expect(TokenType.R_PAREN);
         return func.getReturnType();
@@ -486,21 +489,39 @@ public final class Analyser {
     private void analyseContinueStmt() throws CompileError{
         expect(TokenType.CONTINUE_KW);
         expect(TokenType.SEMICOLON);
+        if(this.while_level == 0){
+            throw new AnalyzeError(ErrorCode.OutWhile, peek().getStartPos());
+        }
+        Instruction instruction = new Instruction(Operation.br);
+        this.continue_instruction.add(new BreakAndContinue(instruction, this.function_body.size() + 1, this.while_level));
+        this.function_body.add(instruction);
     }
 
     private void analyseBreakStmt() throws CompileError{
         expect(TokenType.BREAK_KW);
+        if(this.while_level == 0){
+            throw new AnalyzeError(ErrorCode.OutWhile, peek().getStartPos());
+        }
+        Instruction instruction = new Instruction(Operation.br);
+        this.break_instruction.add(new BreakAndContinue(instruction, this.function_body.size() + 1, this.while_level));
+        this.function_body.add(instruction);
+
         expect(TokenType.SEMICOLON);
     }
 
     private void analyseWhileStmt(int level) throws CompileError{
+        // 函数里的第一个while level为1
         expect(TokenType.WHILE_KW);
         this.addInstruction(new Instruction(Operation.br, (long)0));
 
         // start，记录开始计算while条件的指令位置
         int start = this.function_body.size();
-        analyseExpr();
+        TokenType type = analyseExpr();
         this.addAllInstruction(expr_stack.addAllReset());
+
+        if(type != TokenType.INT_KW && type != TokenType.DOUBLE_KW){
+            throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
+        }
 
         // br_true，如果是真的话跳过br指令，如果是假的话跳到br指令跳出循环
         this.addInstruction(new Instruction(Operation.br_true, (long)1));
@@ -512,16 +533,39 @@ public final class Analyser {
         // 记录while循环体开始处
         int index = this.function_body.size();
 
+        this.while_level++;
         analyseBlockStmt(null, level + 1);
+        if(this.while_level > 0){
+            this.while_level--;
+        }
 
         // br_start，跳到while条件判断处，参数待填
         Instruction br_start = new Instruction(Operation.br);
         this.addInstruction(br_start);
         br_start.setNum((long)(start - this.function_body.size()));
 
-        br.setNum((long)(this.function_body.size() - index));
-//        booleanTree.setTrueInstructions(analyseBlockStmt(null, level + 1));
-//        return whileTree.generate();
+        int end_index = this.function_body.size();
+        br.setNum((long)(end_index - index));
+
+        if(break_instruction.size()!=0){
+            for(BreakAndContinue b: break_instruction){
+                if(b.getWhileLevel() == this.while_level + 1)
+                    b.getInstruction().setNum((long)(end_index - b.getLocation()));
+            }
+        }
+
+        if(continue_instruction.size() != 0){
+            for(BreakAndContinue c: continue_instruction){
+                if(c.getWhileLevel() == this.while_level + 1)
+                    c.getInstruction().setNum((long)(end_index - c.getLocation() - 1));
+            }
+        }
+
+        // 重新初始化
+        if(this.while_level == 0){
+            this.continue_instruction = new ArrayList<>();
+            this.break_instruction = new ArrayList<>();
+        }
     }
 
     private void analyseIfStmt(int level) throws CompileError{
