@@ -111,7 +111,7 @@ public class Tokenizer {
                 try{
                     double double_num = Double.parseDouble(uint.toString());
                     token = new Token(TokenType.DOUBLE_LITERAL, double_num, startPos, it.currentPos());
-                }catch(Exception e) {
+                }catch(Exception e1) {
                     throw new TokenizeError(ErrorCode.InvalidDouble, it.currentPos());
                 }
             }
