@@ -212,7 +212,7 @@ public class Definition {
         Function start_func = getFunction("_start");
         List<Instruction> instructions = new ArrayList<>(global_ins);
         instructions.add(new Instruction(Operation.stackalloc, (long)main_func.getReturnSlot()));
-        instructions.add(new Instruction(Operation.call, (long)main_func.getId()));
+        instructions.add(new Instruction(Operation.call, (long)getFunctionIndex(main_func)));
         start_func.setFunctionBody(instructions);
         return start_func;
     }
@@ -240,9 +240,9 @@ public class Definition {
         for (String name: getFunctionList().keySet()) {
             if(!this.isSTDFunction(name)){
                 func_list.add(getFunctionList().get(name));
+                System.out.println("function: " + name);
             }
         }
-
         Collections.sort(func_list);
         int i = 0;
         for(Function f: func_list){
