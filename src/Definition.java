@@ -141,7 +141,7 @@ public class Definition {
 
     public Function addFunction(String name, TokenType return_tt, Pos pos) throws AnalyzeError {
         System.out.println("add function: " + name + "\t\t index: " + this.global_list.size());
-        if(this.function_list.get(name) != null || getSymbol(name, level) != null){
+        if((this.function_list.get(name) != null && !this.function_list.get(name).isSTDFunction()) || getSymbol(name, level) != null){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, pos);
         }
         Function func;
@@ -157,7 +157,7 @@ public class Definition {
         System.out.println("add symbol " + name + "\t\t index: " + this.symbol_list_index + "\t\t type: " + tt + "\t\t level: " + level);
         SymbolEntry se = getSymbol(name, level);
         // 同级存在重复定义
-        if(se != null){
+        if(se != null && !isSTDFunction(se.getName())){
             throw new AnalyzeError(ErrorCode.DuplicateDeclaration, curPos);
         }
         se = new SymbolEntry(id, type, name, tt, is_init, is_const, value, level);
@@ -195,7 +195,7 @@ public class Definition {
     // 获取函数或加载库函数
     public Function getFunction(String name) throws AnalyzeError {
         Function func = this.function_list.get(name);
-        if(func != null){
+        if(func != null && !func.isSTDFunction()){
             return func;
         }
         else if(isSTDFunction(name)){
