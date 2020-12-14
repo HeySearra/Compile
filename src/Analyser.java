@@ -24,7 +24,6 @@ public final class Analyser {
     int local_slot;
     TokenType return_type;
     private boolean onAssign;
-    boolean is_returned;
     private int while_level;
     //continue和break指令的集合
     List<BreakAndContinue> continue_instruction = new ArrayList<BreakAndContinue>();
@@ -193,7 +192,6 @@ public final class Analyser {
         this.return_type = null;
         this.def_table.level = 1;
         this.onAssign = false;
-        this.is_returned = false;
 
         Function func = this.def_table.addFunction(nameToken.getValueString(), null, nameToken.getStartPos());
         this.function = func;
@@ -208,7 +206,7 @@ public final class Analyser {
         this.return_type = return_tt.getTokenType();
         func.setReturnType(this.return_type);
         analyseBlockStmt(return_tt.getTokenType(), 1);
-        if(!this.is_returned){
+        if(this.function_body.get(this.function_body.size() - 1).getOpt() != Operation.ret){
             this.function_body.add(new Instruction(Operation.ret));
         }
         func.setFunctionBody(this.function_body);
@@ -478,7 +476,6 @@ public final class Analyser {
         this.addAllInstruction(expr_stack.addAllReset());
         this.addInstruction(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
-        this.is_returned = true;
     }
 
     private void analyseContinueStmt() throws CompileError{
