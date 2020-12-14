@@ -168,7 +168,7 @@ public class Tokenizer {
         }
         else{
             it.nextChar();
-            return new Token(TokenType.CHAR_LITERAL, res, startPos, it.currentPos());
+            return new Token(TokenType.CHAR_LITERAL, (int)  res, startPos, it.currentPos());
         }
     }
 

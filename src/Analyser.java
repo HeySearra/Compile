@@ -308,12 +308,7 @@ public final class Analyser {
         if(tt == TokenType.UINT_LITERAL || tt == TokenType.CHAR_LITERAL){
             // 直接push进栈
             int num;
-            if(token.getTokenType() == TokenType.UINT_LITERAL){
-                num = (int) token.getValue();
-            }
-            else{
-                num = Character.getNumericValue((Character) token.getValue());
-            }
+            num = (int) token.getValue();
             this.addInstruction(new Instruction(Operation.push, (long)num));
             return TokenType.INT_KW;
         }
