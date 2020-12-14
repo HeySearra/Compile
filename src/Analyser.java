@@ -258,7 +258,11 @@ public final class Analyser {
                 res_ins.addAll(analyseCallExpr(nameToken));
             }
             else if(check(TokenType.ASSIGN)) {
-                res_ins.addAll(analyseAssignExpr(nameToken));
+                SymbolEntry se = this.def_table.getSymbol(nameToken.getValueString());
+                if(se == null){
+                  throw new AnalyzeError(ErrorCode.NotDeclared, peek().getStartPos());
+                }
+                res_ins.addAll(analyseAssignExpr(se, nameToken));
             }
             else{
                 res_ins.addAll(analyseIdentExpr(nameToken));
@@ -339,12 +343,15 @@ public final class Analyser {
         return res_ins;
     }
 
-    private List<Instruction> analyseAssignExpr(Token token) throws CompileError{
+    private List<Instruction> analyseAssignExpr(SymbolEntry se, Token token) throws CompileError{
         List<Instruction> res_ins = new ArrayList<>();
         expect(TokenType.ASSIGN);
         if(this.onAssign){
             throw new AnalyzeError(ErrorCode.AssignFaild, peek().getStartPos());
         }
+        if (se.isConstant())
+            throw new AnalyzeError(ErrorCode.AssignToConstant, peek().getStartPos());
+
         res_ins.add(getLocalOrParamAddress(token));
         res_ins.addAll(analyseExpr());
         res_ins.addAll(expr_stack.addAllReset());

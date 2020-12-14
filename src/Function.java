@@ -43,7 +43,7 @@ public class Function {
   public void setFunctionBody(List<Instruction> function_body) { this.function_body = function_body; }
 
   public int getReturnSlot() {
-    if(this.return_type == TokenType.INT_KW){
+    if(this.return_type == TokenType.INT_KW || this.return_type == TokenType.DOUBLE_KW){
       return 1;
     }
     return 0;
