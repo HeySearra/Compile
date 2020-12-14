@@ -257,7 +257,12 @@ public final class Analyser {
     private TokenType analyseExpr() throws CompileError{
         TokenType type;
         if(check(TokenType.MINUS)){
-            type = analyseNegateExpr();
+            expect(TokenType.MINUS);
+            type = analyseExpr();
+            if(type == TokenType.INT_KW)
+                this.addInstruction(new Instruction(Operation.neg_i));
+            else
+                this.addInstruction(new Instruction(Operation.neg_f));
         }
         else if(check(TokenType.L_PAREN)){
             type = analyseGroupExpr();
