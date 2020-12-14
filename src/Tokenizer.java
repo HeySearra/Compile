@@ -263,6 +263,10 @@ public class Tokenizer {
                 return new Token(TokenType.VOID_KW, s, startPos, it.currentPos());
             case "double":
                 return new Token(TokenType.DOUBLE_KW, s, startPos, it.currentPos());
+            case "break":
+                return new Token(TokenType.BREAK_KW, s, startPos, it.currentPos());
+            case "continue":
+                return new Token(TokenType.CONTINUE_KW, s, startPos, it.currentPos());
             default:
                 return new Token(TokenType.IDENT, s, startPos, it.currentPos());
         }
