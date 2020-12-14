@@ -418,14 +418,19 @@ public final class Analyser {
     }
 
     private void analyseCallParamList(List<SymbolEntry> param_list) throws CompileError{
-        int param_num = 1;
-        analyseExpr();
+        int param_num = 1, i = 0;
+        TokenType type = analyseExpr();
+        if(param_list.get(i++).getTokenType() != type){
+            throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
+        }
         // 将栈中表达式全计算完
         this.addAllInstruction(this.expr_stack.addAllReset());
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
-            // todo: 返回值类型检查
-            analyseExpr();
+            type = analyseExpr();
+            if(param_list.get(i++).getTokenType() != type){
+                throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
+            }
             this.addAllInstruction(this.expr_stack.addAllReset());
             param_num++;
         }
