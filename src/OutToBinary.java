@@ -2,6 +2,7 @@ import java.io.*;
 import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -68,12 +69,20 @@ public class OutToBinary {
     System.out.println("-----------------输出function数组----------------");
     generateFunction(start);
     i = 1;
+    List<Function> func_list = new ArrayList<>();
     for (String name: def_table.getFunctionList().keySet()) {
       if(!name.equals("_start") && !this.def_table.isSTDFunction(name)){
         System.out.println(i++ + "     -----------");
-        generateFunction(def_table.getFunctionList().get(name));
+        func_list.add(def_table.getFunctionList().get(name));
       }
     }
+
+    Collections.sort(func_list);
+    for(Function f: func_list){
+      System.out.println(i++ + "     -----------");
+      generateFunction(f);
+    }
+
 
     return output;
   }
@@ -122,7 +131,7 @@ public class OutToBinary {
           // push是8字节，其他是4字节
           x = long2bytes(8, i.getNum());
         else
-          x = long2bytes(4, i.getNum());
+          x = int2bytes(4, (int)(long)i.getNum());
         output.addAll(x);
       }
     }

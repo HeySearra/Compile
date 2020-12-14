@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Function {
+public class Function implements Comparable<Function>{
   // 函数体
   List<Instruction> function_body;
 
@@ -104,5 +104,10 @@ public class Function {
       }
     }
     return false;
+  }
+
+  @Override
+  public int compareTo(Function arg0) {
+    return this.getId() - arg0.getId();
   }
 }
