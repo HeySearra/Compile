@@ -140,7 +140,6 @@ public class ExprStack {
     }
 
     TokenType top= operation_stack.peek();
-    System.out.println("top:" + top);
     while (priority[getIndex(top)][getIndex(tt)] > 0){
       operation_stack.pop();
       instructions.addAll(generateInstruction(top, type));

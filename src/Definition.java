@@ -154,7 +154,7 @@ public class Definition {
 
     // todo: 局部变量和全局可以重名，和函数可以重名吗？
     public SymbolEntry addSymbol(int id, String name, SymbolType type, TokenType tt, boolean is_init, boolean is_const, Pos curPos, Object value, int level) throws AnalyzeError {
-        System.out.println("add symbol " + name + "\t\t index: " + this.symbol_list_index + "\t\t type: " + tt + "\t\t level: " + level);
+//        System.out.println("add symbol " + name + "\t\t index: " + this.symbol_list_index + "\t\t type: " + tt + "\t\t level: " + level);
         SymbolEntry se = getSymbol(name, level);
         // 同级存在重复定义
         if(se != null){
@@ -240,7 +240,6 @@ public class Definition {
         for (String name: getFunctionList().keySet()) {
             if(!this.isSTDFunction(name)){
                 func_list.add(getFunctionList().get(name));
-                System.out.println("function: " + name);
             }
         }
         Collections.sort(func_list);

@@ -389,6 +389,7 @@ public final class Analyser {
             throw new AnalyzeError(ErrorCode.AssignTypeWrong, peek().getStartPos());
         }
         this.addAllInstruction(expr_stack.addAllReset(type));
+        System.out.println("ini:: " + token.getValueString());
         initializeSymbol(token.getValueString(), token.getStartPos());
         this.addInstruction(new Instruction(Operation.store64));
         return TokenType.VOID_KW;
@@ -668,7 +669,7 @@ public final class Analyser {
         expect(TokenType.ASSIGN);
         this.onAssign = true;
         if(level == 0){// 全局
-            int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), false, true, nameToken.getStartPos(), null);
+            int global_id = this.def_table.addGlobal(nameToken.getValueString(), type.getTokenType(), true, true, nameToken.getStartPos(), null);
             this.global_instructions.add(new Instruction(Operation.globa, (long)global_id));
         }
         else{
