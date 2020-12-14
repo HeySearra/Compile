@@ -245,42 +245,42 @@ public final class Analyser {
             expect(TokenType.SEMICOLON);
         } else{
             analyseExprStmt();
-            this.addAllInstruction(expr_stack.addAllReset());
         }
     }
 
     private void analyseExprStmt() throws CompileError{
-        analyseExpr();
+        TokenType type = analyseExpr();
+        this.addAllInstruction(expr_stack.addAllReset(type));
         expect(TokenType.SEMICOLON);
     }
 
     private TokenType analyseExpr() throws CompileError{
-        TokenType tt;
+        TokenType type;
         if(check(TokenType.MINUS)){
-            tt = analyseNegateExpr();
+            type = analyseNegateExpr();
         }
         else if(check(TokenType.L_PAREN)){
-            tt = analyseGroupExpr();
+            type = analyseGroupExpr();
         }
         else if(check(TokenType.IDENT)){
             Token nameToken = expect(TokenType.IDENT);
 
             if(check(TokenType.L_PAREN)) {
-                tt = analyseCallExpr(nameToken);
+                type = analyseCallExpr(nameToken);
             }
             else if(check(TokenType.ASSIGN)) {
                 SymbolEntry se = this.def_table.getSymbol(nameToken.getValueString());
                 if(se == null){
                   throw new AnalyzeError(ErrorCode.NotDeclared, peek().getStartPos());
                 }
-                tt = analyseAssignExpr(se, nameToken);
+                type = analyseAssignExpr(se, nameToken);
             }
             else{
-                tt = analyseIdentExpr(nameToken);
+                type = analyseIdentExpr(nameToken);
             }
         }
         else if(check(TokenType.UINT_LITERAL, TokenType.DOUBLE_LITERAL, TokenType.STRING_LITERAL, TokenType.CHAR_LITERAL)){
-            tt = analyseLiteralExpr();
+            type = analyseLiteralExpr();
         }
         else {
             throw new ExpectedTokenError(Format.generateList(TokenType.MINUS, TokenType.L_PAREN, TokenType.IDENT, TokenType.L_PAREN, TokenType.ASSIGN),
@@ -291,13 +291,13 @@ public final class Analyser {
             TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE, TokenType.AS_KW)){
             if(check(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
                 TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE)) {
-                tt = analyseOperatorExpr(tt);
+                type = analyseOperatorExpr(type);
             }
             else if(check(TokenType.AS_KW)){
-                tt = analyseAsExpr(tt);
+                type = analyseAsExpr(type);
             }
         }
-        return tt;
+        return type;
     }
 
     private TokenType analyseLiteralExpr() throws CompileError{
@@ -342,7 +342,6 @@ public final class Analyser {
         else if(tt != as_tt){
             throw new AnalyzeError(ErrorCode.AsTypeWrong, peek().getStartPos());
         }
-        this.addAllInstruction(expr_stack.addAllReset());
         while(check(TokenType.AS_KW)){
             as_tt = analyseAsExpr(as_tt);
         }
@@ -352,7 +351,7 @@ public final class Analyser {
     private TokenType analyseOperatorExpr(TokenType tt) throws CompileError{
         Token token = expect(TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.DIV, TokenType.EQ,
             TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE);
-        this.addAllInstruction(expr_stack.addTokenAndGenerateInstruction(token.getTokenType()));
+        this.addAllInstruction(expr_stack.addTokenAndGenerateInstruction(token.getTokenType(), tt));
         TokenType next_tt = analyseExpr();
         if(tt != next_tt || (tt != TokenType.INT_KW && tt != TokenType.DOUBLE_KW)){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
@@ -383,13 +382,13 @@ public final class Analyser {
 
         this.addInstruction(getLocalOrParamAddress(token));
         // 获取值的类型
-        TokenType tt = analyseExpr();
+        TokenType type = analyseExpr();
         TokenType assigned = se.getTokenType();
         // 判断值的类型是否和se相同
-        if(tt != assigned || (assigned != TokenType.INT_KW && assigned != TokenType.DOUBLE_KW)){
+        if(type != assigned || (assigned != TokenType.INT_KW && assigned != TokenType.DOUBLE_KW)){
             throw new AnalyzeError(ErrorCode.AssignTypeWrong, peek().getStartPos());
         }
-        this.addAllInstruction(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset(type));
         initializeSymbol(token.getValueString(), token.getStartPos());
         this.addInstruction(new Instruction(Operation.store64));
         return TokenType.VOID_KW;
@@ -424,14 +423,14 @@ public final class Analyser {
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
         }
         // 将栈中表达式全计算完
-        this.addAllInstruction(this.expr_stack.addAllReset());
+        this.addAllInstruction(this.expr_stack.addAllReset(type));
         while(check(TokenType.COMMA)){
             expect(TokenType.COMMA);
             type = analyseExpr();
             if(param_list.get(i++).getTokenType() != type){
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
-            this.addAllInstruction(this.expr_stack.addAllReset());
+            this.addAllInstruction(this.expr_stack.addAllReset(type));
             param_num++;
         }
         if(param_num != param_list.size()){
@@ -442,19 +441,22 @@ public final class Analyser {
 
     private TokenType analyseGroupExpr() throws CompileError{
         expect(TokenType.L_PAREN);
-        this.addAllInstruction(this.expr_stack.addTokenAndGenerateInstruction(TokenType.L_PAREN));
-        TokenType tt = analyseExpr();
+        this.expr_stack.push(TokenType.L_PAREN);
+        TokenType type = analyseExpr();
         expect(TokenType.R_PAREN);
-        this.addAllInstruction(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN));
-        this.addAllInstruction(expr_stack.addAllReset());
-        return tt;
+        this.addAllInstruction(this.expr_stack.addTokenAndGenerateInstruction(TokenType.R_PAREN, type));
+        this.addAllInstruction(expr_stack.addAllReset(type));
+        return type;
     }
 
     private TokenType analyseNegateExpr() throws CompileError{
         expect(TokenType.MINUS);
         this.addInstruction(new Instruction(Operation.push, 0L));
         TokenType tt = analyseExpr();
-        this.addInstruction(new Instruction((Operation.sub_i)));
+        if(tt == TokenType.INT_KW)
+            this.addInstruction(new Instruction((Operation.sub_i)));
+        else
+            this.addInstruction(new Instruction((Operation.sub_f)));
         return tt;
     }
 
@@ -468,17 +470,16 @@ public final class Analyser {
             // todo: 返回值类型检查
             // 返回值off是0
             this.addInstruction(new Instruction(Operation.arga, (long)0));
-            TokenType tt = analyseExpr();
-            if(tt != this.return_type){
+            TokenType type = analyseExpr();
+            if(type != this.return_type){
                 throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
             }
-            this.addAllInstruction(expr_stack.addAllReset());
+            this.addAllInstruction(expr_stack.addAllReset(type));
             this.addInstruction(new Instruction(Operation.store64));
         }
         else if(this.return_type != TokenType.VOID_KW){
             throw new AnalyzeError(ErrorCode.ReturnTypeWrong, peek().getStartPos());
         }
-        this.addAllInstruction(expr_stack.addAllReset());
         this.addInstruction(new Instruction(Operation.ret));
         expect(TokenType.SEMICOLON);
     }
@@ -514,7 +515,7 @@ public final class Analyser {
         // start，记录开始计算while条件的指令位置
         int start = this.function_body.size();
         TokenType type = analyseExpr();
-        this.addAllInstruction(expr_stack.addAllReset());
+        this.addAllInstruction(expr_stack.addAllReset(type));
 
         if(type != TokenType.INT_KW && type != TokenType.DOUBLE_KW){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
@@ -568,8 +569,8 @@ public final class Analyser {
     private void analyseIfStmt(int level) throws CompileError{
         expect(TokenType.IF_KW);
 
-        analyseExpr();
-        this.addAllInstruction(expr_stack.addAllReset());
+        TokenType type = analyseExpr();
+        this.addAllInstruction(expr_stack.addAllReset(type));
 
         //brTrue
         this.addInstruction(new Instruction(Operation.br_true, (long)1));
@@ -678,12 +679,7 @@ public final class Analyser {
         if(tt != type.getTokenType()){
             throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
         }
-        if(level == 0){
-            // 全局
-            this.global_instructions.addAll(this.expr_stack.addAllReset());
-            this.global_instructions.add(new Instruction((Operation.store64)));
-        }
-        this.addAllInstruction(this.expr_stack.addAllReset());
+        this.addAllInstruction(this.expr_stack.addAllReset(tt));
         this.addInstruction(new Instruction((Operation.store64)));
         this.onAssign = false;
         expect(TokenType.SEMICOLON);
@@ -713,15 +709,7 @@ public final class Analyser {
                 System.out.println(tt + "  " + type.getTokenType());
                 throw new AnalyzeError(ErrorCode.ExprTypeWrong, peek().getStartPos());
             }
-            if(level == 0){
-                // 全局
-                this.global_instructions.addAll(this.expr_stack.addAllReset());
-                this.global_instructions.add(new Instruction((Operation.store64)));
-            }
-            else {
-                this.addAllInstruction(this.expr_stack.addAllReset());
-                this.addInstruction(new Instruction((Operation.store64)));
-            }
+            this.addInstruction(new Instruction((Operation.store64)));
             this.onAssign = false;
         }
         else{

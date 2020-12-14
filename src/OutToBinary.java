@@ -41,6 +41,7 @@ public class OutToBinary {
       //is_const
       List<Byte> is_const=int2bytes(1, g.isConstant().compareTo(false));
       output.addAll(is_const);
+      System.out.println("index: " + g.getId());
       System.out.println("is_const: " + g.isConstant().compareTo(false));
 
       List<Byte> global_value_count;

@@ -57,52 +57,82 @@ public class ExprStack {
     return -1;
   }
 
-  public List<Instruction> generateInstruction(TokenType top){
+  public List<Instruction> generateInstruction(TokenType top, TokenType type){
     List<Instruction> res_ins = new ArrayList<>();
     switch (top) {
       case LT:
-        res_ins.add(new Instruction(Operation.cmp_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.cmp_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.cmp_f));
         res_ins.add(new Instruction(Operation.set_lt));
         break;
       case LE:
-        res_ins.add(new Instruction(Operation.cmp_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.cmp_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.cmp_f));
         res_ins.add(new Instruction(Operation.set_gt));
         res_ins.add(new Instruction(Operation.not));
         break;
       case GT:
-        res_ins.add(new Instruction(Operation.cmp_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.cmp_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.cmp_f));
         res_ins.add(new Instruction(Operation.set_gt));
         break;
       case GE:
-        res_ins.add(new Instruction(Operation.cmp_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.cmp_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.cmp_f));
         res_ins.add(new Instruction(Operation.set_lt));
         res_ins.add(new Instruction(Operation.not));
         break;
       case PLUS:
-        res_ins.add(new Instruction(Operation.add_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.add_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.add_f));
         break;
       case MINUS:
-        res_ins.add(new Instruction(Operation.sub_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.sub_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.sub_f));
         break;
       case MUL:
-        res_ins.add(new Instruction(Operation.mul_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.mul_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.mul_f));
         break;
       case DIV:
-        res_ins.add(new Instruction(Operation.div_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.div_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.div_f));
         break;
       case EQ:
-        res_ins.add(new Instruction(Operation.cmp_i));
+        if(type == TokenType.INT_KW)
+          res_ins.add(new Instruction(Operation.cmp_i));
+        else if(type == TokenType.DOUBLE_KW)
+          res_ins.add(new Instruction(Operation.cmp_f));
         res_ins.add(new Instruction(Operation.not));
         break;
       case NEQ:
+        if(type == TokenType.INT_KW)
         res_ins.add(new Instruction(Operation.cmp_i));
+      else if(type == TokenType.DOUBLE_KW)
+        res_ins.add(new Instruction(Operation.cmp_f));
         break;
     }
     return res_ins;
   }
 
 
-  public List<Instruction> addTokenAndGenerateInstruction(TokenType tt){
+  public List<Instruction> addTokenAndGenerateInstruction(TokenType tt, TokenType type){
     List<Instruction> instructions=new ArrayList<>();
     if (operation_stack.empty()){
       operation_stack.push(tt);
@@ -113,7 +143,7 @@ public class ExprStack {
     System.out.println("top:" + top);
     while (priority[getIndex(top)][getIndex(tt)] > 0){
       operation_stack.pop();
-      instructions.addAll(generateInstruction(top));
+      instructions.addAll(generateInstruction(top, type));
       if (operation_stack.empty() || top == TokenType.L_PAREN)
         break;
       top = operation_stack.peek();
@@ -122,11 +152,15 @@ public class ExprStack {
     return instructions;
   }
 
-  public List<Instruction> addAllReset(){
+  public List<Instruction> addAllReset(TokenType type){
     List<Instruction> instructions=new ArrayList<>();
     while(!operation_stack.empty()){
-      instructions.addAll(generateInstruction(operation_stack.pop()));
+      instructions.addAll(generateInstruction(operation_stack.pop(), type));
     }
     return instructions;
+  }
+
+  public void push(TokenType type){
+    operation_stack.push(type);
   }
 }
