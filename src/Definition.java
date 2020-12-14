@@ -28,7 +28,7 @@ public class Definition {
     }
 
     public Boolean isSTDFunction(String name){
-        String[] std_function = {"getint", "getdouble", "getchar", "putint", "putdouble", "putchar",
+        String[] std_function = {"getchar", "getint", "getdouble", "getchar", "putint", "putdouble", "putchar",
             "putstr", "putln"};
         for(String n: std_function){
             if(n.equals(name)){
@@ -44,6 +44,12 @@ public class Definition {
         }
         Function func;
         switch (name) {
+            case "getchar":
+                func = this.addFunction("getchar", TokenType.CHAR_LITERAL, new Pos(-1, -1));
+                func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));
+                func.setReturnType(TokenType.INT_KW);
+                func.setParamSlot(0);
+                return func;
             case "getint":
                 func = this.addFunction("getint", TokenType.INT_KW, new Pos(-1, -1));
                 func.setFunctionBody(new ArrayList<>(Collections.singletonList(new Instruction())));

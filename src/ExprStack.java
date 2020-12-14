@@ -3,7 +3,7 @@ import java.util.List;
 import java.util.Stack;
 
 public class ExprStack {
-  public static Stack<TokenType> operation_stack =new Stack<>();
+  public Stack<TokenType> operation_stack =new Stack<>();
   //  + - * / ( )
   int[][] priority ={
       {1,1,-1,-1,-1,1,   1,1,1,1,1,1,  -1},
@@ -146,6 +146,9 @@ public class ExprStack {
       if (operation_stack.empty() || top == TokenType.L_PAREN)
         break;
       top = operation_stack.peek();
+    }
+    if(tt != TokenType.R_PAREN){
+      operation_stack.push(tt);
     }
     operation_stack.push(tt);
     return instructions;

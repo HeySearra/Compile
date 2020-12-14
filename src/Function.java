@@ -96,7 +96,7 @@ public class Function implements Comparable<Function>{
   }
 
   public Boolean isSTDFunction(){
-    String[] std_function = {"getint", "getdouble", "getchar", "putint", "putdouble", "putchar",
+    String[] std_function = {"getchar", "getint", "getdouble", "getchar", "putint", "putdouble", "putchar",
         "putstr", "putln"};
     for(String n: std_function) {
       if (this.se.getName().equals(n)){

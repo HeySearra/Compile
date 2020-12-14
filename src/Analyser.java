@@ -96,7 +96,7 @@ public final class Analyser {
 
     /**
      * 设置符号为已赋值
-     * 
+     *
      * @param name   符号名称
      * @param curPos 当前位置（报错用）
      * @throws AnalyzeError 如果未定义则抛异常
@@ -271,7 +271,7 @@ public final class Analyser {
             else if(check(TokenType.ASSIGN)) {
                 SymbolEntry se = this.def_table.getSymbol(nameToken.getValueString());
                 if(se == null){
-                  throw new AnalyzeError(ErrorCode.NotDeclared, peek().getStartPos());
+                    throw new AnalyzeError(ErrorCode.NotDeclared, peek().getStartPos());
                 }
                 type = analyseAssignExpr(se, nameToken);
             }
